@@ -1,103 +1,160 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User } from '@/types';
-import { authAPI, handleApiError } from '@/api';
+import { authAPI } from '../utils/api';
+import { toast } from 'sonner';
+
+interface User {
+  userId: number;
+  fullName: string;
+  email: string;
+  role: 'admin' | 'user';
+}
 
 interface AuthContextType {
   user: User | null;
-  isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (full_name: string, email: string, password: string) => Promise<void>;
-  logout: () => void;
+  isLoading: boolean;
   error: string | null;
+  login: (email: string, password: string) => Promise<boolean>;
+  register: (fullName: string, email: string, password: string) => Promise<boolean>;
+  logout: () => void;
+  clearError: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Kiểm tra xem người dùng đã đăng nhập chưa khi khởi động ứng dụng
+  const clearError = () => setError(null);
+
   useEffect(() => {
+    // Check for saved authentication
     const token = localStorage.getItem('token');
+    const savedUser = localStorage.getItem('eduUser');
     
-    if (!token) {
+    if (token && savedUser) {
+      setUser(JSON.parse(savedUser));
+      
+      // Xác thực token bằng cách gọi API profile
+      const verifyToken = async () => {
+        try {
+          const userData = await authAPI.getProfile();
+          setUser({
+            userId: userData.user_id,
+            fullName: userData.full_name,
+            email: userData.email,
+            role: userData.role
+          });
+        } catch (error: any) {
+          console.error('Token không hợp lệ:', error);
+          // Hiển thị thông báo lỗi nếu cần
+          if (error.message) {
+            toast.error(error.message);
+          }
+          logout();
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      
+      verifyToken();
+    } else {
       setIsLoading(false);
-      return;
     }
-
-    const fetchUser = async () => {
-      try {
-        const userData = await authAPI.getProfile();
-        setUser(userData);
-      } catch (error) {
-        console.error('Failed to fetch user profile:', error);
-        localStorage.removeItem('token');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchUser();
+    
   }, []);
 
-  const login = async (email: string, password: string) => {
-    setError(null);
+  const login = async (email: string, password: string): Promise<boolean> => {
+    setIsLoading(true);
+    clearError();
+    
     try {
-      setIsLoading(true);
       const response = await authAPI.login(email, password);
+      
+      const userData = {
+        userId: response.user.user_id,
+        fullName: response.user.full_name,
+        email: response.user.email,
+        role: response.user.role
+      };
+      
+      setUser(userData);
       localStorage.setItem('token', response.token);
-      setUser(response.user);
-    } catch (error) {
-      const errorMsg = handleApiError(error);
-      setError(errorMsg);
-      throw new Error(errorMsg);
+      localStorage.setItem('eduUser', JSON.stringify(userData));
+      toast.success('Đăng nhập thành công');
+      return true;
+    } catch (error: any) {
+      console.error('Đăng nhập thất bại:', error);
+      const errorMessage = error.message || 'Đăng nhập thất bại. Vui lòng thử lại.';
+      setError(errorMessage);
+      toast.error(errorMessage);
+      return false;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const register = async (full_name: string, email: string, password: string) => {
-    setError(null);
+  const register = async (fullName: string, email: string, password: string): Promise<boolean> => {
+    setIsLoading(true);
+    clearError();
+    
     try {
-      setIsLoading(true);
-      const response = await authAPI.register(full_name, email, password);
+      const response = await authAPI.register(fullName, email, password);
+      
+      const userData = {
+        userId: response.user.user_id,
+        fullName: response.user.full_name,
+        email: response.user.email,
+        role: response.user.role
+      };
+      
+      setUser(userData);
       localStorage.setItem('token', response.token);
-      setUser(response.user);
-    } catch (error) {
-      const errorMsg = handleApiError(error);
-      setError(errorMsg);
-      throw new Error(errorMsg);
+      localStorage.setItem('eduUser', JSON.stringify(userData));
+      toast.success('Đăng ký tài khoản thành công');
+      return true;
+    } catch (error: any) {
+      console.error('Đăng ký thất bại:', error);
+      const errorMessage = error.message || 'Không thể tạo tài khoản. Vui lòng thử lại.';
+      setError(errorMessage);
+      toast.error(errorMessage);
+      return false;
     } finally {
       setIsLoading(false);
     }
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
     setUser(null);
+    localStorage.removeItem('token');
+    localStorage.removeItem('eduUser');
+    toast.info('Đã đăng xuất');
   };
 
   const value = {
     user,
-    isLoading,
     isAuthenticated: !!user,
+    isLoading,
+    error,
     login,
     register,
     logout,
-    error,
+    clearError
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-}
+};

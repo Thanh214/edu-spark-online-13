@@ -1,121 +1,122 @@
 
-import { useState, FormEvent, useEffect } from 'react';
-import { Link, useNavigate, Navigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/AuthContext';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { login, isAuthenticated } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
-  
-  // Redirect if already authenticated
-  if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
-  }
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    
+    if (!email || !password) {
+      toast({
+        title: "Lỗi",
+        description: "Vui lòng điền đầy đủ thông tin",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsLoading(true);
-
+    
     try {
-      await login(email, password);
-      navigate('/dashboard', { replace: true });
-    } catch (err: any) {
-      setError(err.message || 'Đăng nhập thất bại. Vui lòng thử lại.');
+      const success = await login(email, password);
+      
+      if (success) {
+        toast({
+          title: "Thành công",
+          description: "Bạn đã đăng nhập thành công",
+        });
+        navigate("/dashboard");
+      } else {
+        toast({
+          title: "Lỗi",
+          description: "Thông tin đăng nhập không hợp lệ",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Lỗi",
+        description: "Đã xảy ra lỗi. Vui lòng thử lại.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <div className="m-auto w-full max-w-md p-8 rounded-lg bg-white shadow-xl">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold bg-gradient-to-r from-brand-blue to-brand-indigo bg-clip-text text-transparent">
-            Đăng nhập
-          </h2>
-          <p className="text-gray-600 mt-2">
-            Chào mừng bạn quay trở lại với EduSpark
-          </p>
-        </div>
-
-        {error && (
-          <div className="bg-red-50 text-red-500 p-4 rounded-md mb-6">
-            {error}
+    <div className="flex flex-col min-h-screen">
+      <Header />
+      
+      <main className="flex-grow flex items-center justify-center bg-gray-50 py-12">
+        <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-md">
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold text-edu-dark">Chào Mừng Trở Lại</h1>
+            <p className="text-gray-600 mt-2">
+              Đăng nhập để tiếp tục đến bảng điều khiển của bạn
+            </p>
           </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="name@example.com"
-              required
-            />
-          </div>
-
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-              Mật khẩu
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="••••••••"
-              required
-            />
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <input
-                id="remember"
-                type="checkbox"
-                className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+          
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="email@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
               />
-              <label htmlFor="remember" className="ml-2 block text-sm text-gray-700">
-                Ghi nhớ đăng nhập
-              </label>
             </div>
-            <Link to="/forgot-password" className="text-sm text-brand-blue hover:underline">
-              Quên mật khẩu?
-            </Link>
+            
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Mật khẩu</Label>
+                <Link to="#" className="text-sm text-edu-primary hover:underline">
+                  Quên mật khẩu?
+                </Link>
+              </div>
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            
+            <Button className="w-full" type="submit" disabled={isLoading}>
+              {isLoading ? "Đang đăng nhập..." : "Đăng Nhập"}
+            </Button>
+          </form>
+          
+          <div className="mt-6 text-center">
+            <p className="text-sm text-gray-600">
+              Chưa có tài khoản?{" "}
+              <Link to="/register" className="text-edu-primary hover:underline">
+                Đăng ký
+              </Link>
+            </p>
           </div>
-
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={isLoading}
-            variant="gradient"
-          >
-            {isLoading ? 'Đang xử lý...' : 'Đăng nhập'}
-          </Button>
-        </form>
-
-        <div className="mt-6 text-center">
-          <p className="text-sm text-gray-600">
-            Chưa có tài khoản?{' '}
-            <Link to="/register" className="text-brand-blue hover:underline font-medium">
-              Đăng ký ngay
-            </Link>
-          </p>
         </div>
-      </div>
+      </main>
+      
+      <Footer />
     </div>
   );
 };
