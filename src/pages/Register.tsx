@@ -1,6 +1,6 @@
 
 import { useState, FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -11,23 +11,28 @@ const Register = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { register } = useAuth();
-  const navigate = useNavigate();
+  const { register, isAuthenticated } = useAuth();
+  
+  // Redirect if already authenticated
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
-
+    
+    // Validate passwords
     if (password !== confirmPassword) {
-      setError('Mật khẩu nhập lại không khớp');
+      setError('Mật khẩu xác nhận không khớp.');
       return;
     }
-
+    
     setIsLoading(true);
-
+    
     try {
       await register(fullName, email, password);
-      navigate('/dashboard');
+      // No need to navigate here - the isAuthenticated check will redirect
     } catch (err: any) {
       setError(err.message || 'Đăng ký thất bại. Vui lòng thử lại.');
     } finally {
@@ -40,10 +45,10 @@ const Register = () => {
       <div className="m-auto w-full max-w-md p-8 rounded-lg bg-white shadow-xl">
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold bg-gradient-to-r from-brand-blue to-brand-indigo bg-clip-text text-transparent">
-            Tạo tài khoản
+            Đăng ký tài khoản
           </h2>
           <p className="text-gray-600 mt-2">
-            Bắt đầu hành trình học tập của bạn với EduSpark
+            Tham gia cùng EduSpark để bắt đầu hành trình học tập
           </p>
         </div>
 
@@ -53,7 +58,7 @@ const Register = () => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
               Họ và tên
@@ -95,15 +100,13 @@ const Register = () => {
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="••••••••"
-              minLength={6}
               required
             />
-            <p className="mt-1 text-xs text-gray-500">Mật khẩu phải có ít nhất 6 ký tự</p>
           </div>
 
           <div>
             <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
-              Nhập lại mật khẩu
+              Xác nhận mật khẩu
             </label>
             <input
               id="confirmPassword"
@@ -116,30 +119,10 @@ const Register = () => {
             />
           </div>
 
-          <div className="flex items-center">
-            <input
-              id="terms"
-              type="checkbox"
-              className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-              required
-            />
-            <label htmlFor="terms" className="ml-2 block text-sm text-gray-700">
-              Tôi đồng ý với{' '}
-              <Link to="/terms" className="text-brand-blue hover:underline">
-                Điều khoản sử dụng
-              </Link>{' '}
-              và{' '}
-              <Link to="/privacy" className="text-brand-blue hover:underline">
-                Chính sách bảo mật
-              </Link>
-            </label>
-          </div>
-
           <Button
             type="submit"
-            className="w-full mt-6"
+            className="w-full"
             disabled={isLoading}
-            variant="gradient"
           >
             {isLoading ? 'Đang xử lý...' : 'Đăng ký'}
           </Button>

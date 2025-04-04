@@ -20,15 +20,15 @@ const App = () => {
     <AuthProvider>
       <Router>
         <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<Home />} />
+          {/* Auth Routes - Accessible when logged in */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/courses" element={<Courses />} />
-          <Route path="/courses/:id" element={<CourseDetails />} />
 
-          {/* Protected Routes */}
+          {/* Protected Routes - Require Authentication */}
           <Route element={<ProtectedRoute />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/courses" element={<Courses />} />
+            <Route path="/courses/:id" element={<CourseDetails />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/learn/:courseId" element={<LessonPlayer />} />
