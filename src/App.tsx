@@ -58,6 +58,7 @@ const App = () => (
             <Routes>
               {/* Public routes */}
               <Route path="/" element={<Index />} />
+              <Route path="/team" element={<Team />} />
               
               {/* Authentication routes - redirect if already logged in */}
               <Route path="/login" element={
@@ -78,7 +79,6 @@ const App = () => (
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/learning/:courseId/:lessonId" element={<LearningPage />} />
                 <Route path="/exam/:examId" element={<ExamPage />} />
-                <Route path="/team" element={<Team />} />
               </Route>
               
               {/* Admin Routes */}
