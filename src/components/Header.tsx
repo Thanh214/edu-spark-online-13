@@ -45,7 +45,7 @@ const Header = () => {
           {isAuthenticated ? (
             <>
               <span className="text-sm font-medium text-edu-dark">
-                {user?.fullName}
+                {user?.full_name}
               </span>
               <Button variant="outline" onClick={logout}>
                 Đăng Xuất
