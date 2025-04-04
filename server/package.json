@@ -7,6 +7,8 @@
     "dev": "nodemon src/index.ts",
     "build": "tsc",
     "db:init": "ts-node src/utils/dbInit.ts",
+    "db:seed": "ts-node src/utils/sampleData.ts",
+    "images:create": "ts-node src/utils/createPlaceholderImages.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

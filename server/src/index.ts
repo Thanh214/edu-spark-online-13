@@ -3,8 +3,8 @@ import dotenv from 'dotenv';
 import morgan from 'morgan';
 import helmet from 'helmet';
 import path from 'path';
-import cors from 'cors';
 import { testConnection } from './config/db';
+import { corsWithOptions, corsForDevelopment } from './middleware/corsMiddleware';
 
 // Import routes
 import authRoutes from './routes/authRoutes';
@@ -27,12 +27,14 @@ process.env.NODE_ENV = process.env.NODE_ENV || 'development';
 // Kiểm tra kết nối database khi khởi động server
 testConnection();
 
-// Middleware CORS đơn giản hóa
-app.use(cors({
-  origin: '*',  // Cho phép tất cả các origin trong quá trình phát triển
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-}));
+// Middleware CORS dựa trên môi trường
+if (process.env.NODE_ENV === 'development') {
+  app.use(corsForDevelopment);
+  console.log('Sử dụng CORS cho môi trường development');
+} else {
+  app.use(corsWithOptions);
+  console.log('Sử dụng CORS cho môi trường production');
+}
 
 console.log(`Ứng dụng đang chạy trong môi trường: ${process.env.NODE_ENV}`);
 

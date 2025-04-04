@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { pool } from '../config/db';
 import { hashPassword } from '../models/userModel';
+import { seedSampleData } from './sampleData';
 
 // Function để chạy script SQL từ file
 async function executeSqlFromFile(filePath: string): Promise<void> {
@@ -36,7 +37,7 @@ async function createAdminUser(): Promise<void> {
     
     // Nếu chưa có admin, tạo tài khoản admin mặc định
     if (users.length === 0) {
-      const adminPassword = await hashPassword('admin123');
+      const adminPassword = await hashPassword('admin123456');
       
       await pool.query(
         'INSERT INTO Users (full_name, email, password, role) VALUES (?, ?, ?, ?)',
@@ -70,6 +71,9 @@ export async function initializeDatabase(): Promise<void> {
     
     // Tạo tài khoản admin mặc định
     await createAdminUser();
+    
+    // Thêm dữ liệu mẫu về khóa học, chương và bài học
+    await seedSampleData();
     
     console.log('Khởi tạo cơ sở dữ liệu thành công');
   } catch (error) {
