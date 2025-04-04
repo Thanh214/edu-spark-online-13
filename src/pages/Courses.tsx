@@ -25,15 +25,15 @@ const Courses = () => {
         {/* Page Header */}
         <section className="bg-edu-primary text-white py-12">
           <div className="container mx-auto px-4 text-center">
-            <h1 className="text-3xl font-bold mb-4">Browse All Courses</h1>
+            <h1 className="text-3xl font-bold mb-4">Tất Cả Khóa Học</h1>
             <p className="text-lg mb-8 max-w-2xl mx-auto">
-              Discover our wide range of courses designed to help you master new skills and advance your career.
+              Khám phá các khóa học đa dạng được thiết kế để giúp bạn nắm vững kỹ năng mới và phát triển sự nghiệp.
             </p>
             
             <div className="max-w-md mx-auto relative">
               <Input
                 type="text"
-                placeholder="Search for courses..."
+                placeholder="Tìm kiếm khóa học..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 bg-white text-gray-800"
@@ -48,9 +48,9 @@ const Courses = () => {
           <div className="container mx-auto px-4">
             {filteredCourses.length === 0 ? (
               <div className="text-center py-12">
-                <h2 className="text-2xl font-semibold text-gray-700 mb-4">No courses found</h2>
-                <p className="text-gray-600 mb-6">Try adjusting your search query.</p>
-                <Button onClick={() => setSearchTerm("")}>Clear Search</Button>
+                <h2 className="text-2xl font-semibold text-gray-700 mb-4">Không tìm thấy khóa học</h2>
+                <p className="text-gray-600 mb-6">Hãy thử điều chỉnh từ khóa tìm kiếm.</p>
+                <Button onClick={() => setSearchTerm("")}>Xóa Tìm Kiếm</Button>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -67,18 +67,18 @@ const Courses = () => {
                       
                       <div className="flex flex-wrap gap-2 mb-4">
                         <span className="text-xs bg-edu-accent/30 text-edu-primary px-2 py-1 rounded-full">
-                          {course.chaptersCount} chapters
+                          {course.chaptersCount} chương
                         </span>
                         <span className="text-xs bg-edu-accent/30 text-edu-primary px-2 py-1 rounded-full">
-                          {course.lessonsCount} lessons
+                          {course.lessonsCount} bài học
                         </span>
                         <span className="text-xs bg-edu-accent/30 text-edu-primary px-2 py-1 rounded-full">
-                          {course.enrolledCount} students
+                          {course.enrolledCount} học viên
                         </span>
                       </div>
                       
                       <Link to={`/courses/${course.courseId}`}>
-                        <Button className="w-full">View Course</Button>
+                        <Button className="w-full">Xem Khóa Học</Button>
                       </Link>
                     </div>
                   </div>

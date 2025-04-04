@@ -21,8 +21,8 @@ const Login = () => {
     
     if (!email || !password) {
       toast({
-        title: "Error",
-        description: "Please fill in all fields",
+        title: "Lỗi",
+        description: "Vui lòng điền đầy đủ thông tin",
         variant: "destructive",
       });
       return;
@@ -35,21 +35,21 @@ const Login = () => {
       
       if (success) {
         toast({
-          title: "Success",
-          description: "You have successfully logged in",
+          title: "Thành công",
+          description: "Bạn đã đăng nhập thành công",
         });
         navigate("/dashboard");
       } else {
         toast({
-          title: "Error",
-          description: "Invalid credentials",
+          title: "Lỗi",
+          description: "Thông tin đăng nhập không hợp lệ",
           variant: "destructive",
         });
       }
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Something went wrong. Please try again.",
+        title: "Lỗi",
+        description: "Đã xảy ra lỗi. Vui lòng thử lại.",
         variant: "destructive",
       });
     } finally {
@@ -64,9 +64,9 @@ const Login = () => {
       <main className="flex-grow flex items-center justify-center bg-gray-50 py-12">
         <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-md">
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-edu-dark">Welcome Back</h1>
+            <h1 className="text-2xl font-bold text-edu-dark">Chào Mừng Trở Lại</h1>
             <p className="text-gray-600 mt-2">
-              Sign in to continue to your dashboard
+              Đăng nhập để tiếp tục đến bảng điều khiển của bạn
             </p>
           </div>
           
@@ -76,7 +76,7 @@ const Login = () => {
               <Input
                 id="email"
                 type="email"
-                placeholder="your@email.com"
+                placeholder="email@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -85,9 +85,9 @@ const Login = () => {
             
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">Mật khẩu</Label>
                 <Link to="#" className="text-sm text-edu-primary hover:underline">
-                  Forgot Password?
+                  Quên mật khẩu?
                 </Link>
               </div>
               <Input
@@ -101,15 +101,15 @@ const Login = () => {
             </div>
             
             <Button className="w-full" type="submit" disabled={isLoading}>
-              {isLoading ? "Signing in..." : "Sign In"}
+              {isLoading ? "Đang đăng nhập..." : "Đăng Nhập"}
             </Button>
           </form>
           
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
-              Don&apos;t have an account?{" "}
+              Chưa có tài khoản?{" "}
               <Link to="/register" className="text-edu-primary hover:underline">
-                Sign up
+                Đăng ký
               </Link>
             </p>
           </div>

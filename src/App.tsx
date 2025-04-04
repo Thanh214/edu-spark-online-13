@@ -16,6 +16,7 @@ import LearningPage from "./pages/LearningPage";
 import ExamPage from "./pages/ExamPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import Team from "./pages/Team";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/register" element={<Register />} />
             <Route path="/courses" element={<Courses />} />
             <Route path="/courses/:courseId" element={<CourseDetails />} />
+            <Route path="/team" element={<Team />} />
             
             {/* Protected Routes */}
             <Route element={<ProtectedRoute />}>

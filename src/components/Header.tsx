@@ -20,19 +20,22 @@ const Header = () => {
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-8">
           <Link to="/" className="text-edu-dark hover:text-edu-primary transition-colors">
-            Home
+            Trang Chủ
           </Link>
           <Link to="/courses" className="text-edu-dark hover:text-edu-primary transition-colors">
-            Courses
+            Khóa Học
+          </Link>
+          <Link to="/team" className="text-edu-dark hover:text-edu-primary transition-colors">
+            Đội Ngũ
           </Link>
           {isAuthenticated && (
             <Link to="/dashboard" className="text-edu-dark hover:text-edu-primary transition-colors">
-              Dashboard
+              Bảng Điều Khiển
             </Link>
           )}
           {isAuthenticated && user?.role === 'admin' && (
             <Link to="/admin" className="text-edu-dark hover:text-edu-primary transition-colors">
-              Admin
+              Quản Trị
             </Link>
           )}
         </nav>
@@ -45,16 +48,16 @@ const Header = () => {
                 {user?.fullName}
               </span>
               <Button variant="outline" onClick={logout}>
-                Logout
+                Đăng Xuất
               </Button>
             </>
           ) : (
             <>
               <Link to="/login">
-                <Button variant="outline">Login</Button>
+                <Button variant="outline">Đăng Nhập</Button>
               </Link>
               <Link to="/register">
-                <Button>Sign Up</Button>
+                <Button>Đăng Ký</Button>
               </Link>
             </>
           )}
@@ -78,14 +81,21 @@ const Header = () => {
               className="text-edu-dark hover:text-edu-primary py-2 transition-colors"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Home
+              Trang Chủ
             </Link>
             <Link 
               to="/courses" 
               className="text-edu-dark hover:text-edu-primary py-2 transition-colors"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Courses
+              Khóa Học
+            </Link>
+            <Link 
+              to="/team" 
+              className="text-edu-dark hover:text-edu-primary py-2 transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Đội Ngũ
             </Link>
             {isAuthenticated && (
               <Link 
@@ -93,7 +103,7 @@ const Header = () => {
                 className="text-edu-dark hover:text-edu-primary py-2 transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Dashboard
+                Bảng Điều Khiển
               </Link>
             )}
             {isAuthenticated && user?.role === 'admin' && (
@@ -102,21 +112,21 @@ const Header = () => {
                 className="text-edu-dark hover:text-edu-primary py-2 transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Admin
+                Quản Trị
               </Link>
             )}
             
             {isAuthenticated ? (
               <Button variant="outline" onClick={() => { logout(); setMobileMenuOpen(false); }}>
-                Logout
+                Đăng Xuất
               </Button>
             ) : (
               <div className="flex flex-col space-y-2">
                 <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
-                  <Button variant="outline" className="w-full">Login</Button>
+                  <Button variant="outline" className="w-full">Đăng Nhập</Button>
                 </Link>
                 <Link to="/register" onClick={() => setMobileMenuOpen(false)}>
-                  <Button className="w-full">Sign Up</Button>
+                  <Button className="w-full">Đăng Ký</Button>
                 </Link>
               </div>
             )}

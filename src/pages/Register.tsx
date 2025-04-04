@@ -23,8 +23,8 @@ const Register = () => {
     
     if (!fullName || !email || !password || !confirmPassword) {
       toast({
-        title: "Error",
-        description: "Please fill in all fields",
+        title: "Lỗi",
+        description: "Vui lòng điền đầy đủ thông tin",
         variant: "destructive",
       });
       return;
@@ -32,8 +32,8 @@ const Register = () => {
     
     if (password !== confirmPassword) {
       toast({
-        title: "Error",
-        description: "Passwords do not match",
+        title: "Lỗi",
+        description: "Mật khẩu không khớp",
         variant: "destructive",
       });
       return;
@@ -41,8 +41,8 @@ const Register = () => {
     
     if (password.length < 6) {
       toast({
-        title: "Error",
-        description: "Password must be at least 6 characters",
+        title: "Lỗi",
+        description: "Mật khẩu phải có ít nhất 6 ký tự",
         variant: "destructive",
       });
       return;
@@ -55,21 +55,21 @@ const Register = () => {
       
       if (success) {
         toast({
-          title: "Success",
-          description: "Your account has been created",
+          title: "Thành công",
+          description: "Tài khoản của bạn đã được tạo",
         });
         navigate("/dashboard");
       } else {
         toast({
-          title: "Error",
-          description: "Failed to create account",
+          title: "Lỗi",
+          description: "Không thể tạo tài khoản",
           variant: "destructive",
         });
       }
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Something went wrong. Please try again.",
+        title: "Lỗi",
+        description: "Đã xảy ra lỗi. Vui lòng thử lại.",
         variant: "destructive",
       });
     } finally {
@@ -84,19 +84,19 @@ const Register = () => {
       <main className="flex-grow flex items-center justify-center bg-gray-50 py-12">
         <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-md">
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-edu-dark">Create an Account</h1>
+            <h1 className="text-2xl font-bold text-edu-dark">Tạo Tài Khoản</h1>
             <p className="text-gray-600 mt-2">
-              Join EduSpark and start your learning journey
+              Tham gia EduSpark và bắt đầu hành trình học tập của bạn
             </p>
           </div>
           
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name</Label>
+              <Label htmlFor="fullName">Họ và Tên</Label>
               <Input
                 id="fullName"
                 type="text"
-                placeholder="John Doe"
+                placeholder="Nguyễn Văn A"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 required
@@ -108,7 +108,7 @@ const Register = () => {
               <Input
                 id="email"
                 type="email"
-                placeholder="your@email.com"
+                placeholder="email@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -116,7 +116,7 @@ const Register = () => {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Mật Khẩu</Label>
               <Input
                 id="password"
                 type="password"
@@ -128,7 +128,7 @@ const Register = () => {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Label htmlFor="confirmPassword">Xác Nhận Mật Khẩu</Label>
               <Input
                 id="confirmPassword"
                 type="password"
@@ -140,15 +140,15 @@ const Register = () => {
             </div>
             
             <Button className="w-full" type="submit" disabled={isLoading}>
-              {isLoading ? "Creating Account..." : "Create Account"}
+              {isLoading ? "Đang Tạo Tài Khoản..." : "Tạo Tài Khoản"}
             </Button>
           </form>
           
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
-              Already have an account?{" "}
+              Đã có tài khoản?{" "}
               <Link to="/login" className="text-edu-primary hover:underline">
-                Sign in
+                Đăng nhập
               </Link>
             </p>
           </div>
