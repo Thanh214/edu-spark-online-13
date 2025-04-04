@@ -1,261 +1,188 @@
-import { useState, useEffect } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { toast } from "@/components/ui/use-toast";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { useAuth } from "@/contexts/AuthContext";
-import { getCourseById, getChaptersByCourseId, mockEnrollments } from "@/utils/mockData";
-import { Course, Chapter } from "@/utils/mockData";
+
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Clock, BookOpen, FileText, Award, ArrowRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import Layout from '@/components/Layout';
+import { coursesAPI, enrollmentsAPI } from '@/api';
+import { Course, Chapter } from '@/types';
+import { useAuth } from '@/contexts/AuthContext';
 
 const CourseDetails = () => {
-  const { courseId } = useParams<{ courseId: string }>();
+  const { id } = useParams<{ id: string }>();
   const [course, setCourse] = useState<Course | null>(null);
-  const [chapters, setChapters] = useState<Chapter[]>([]);
-  const [isEnrolled, setIsEnrolled] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [enrollmentId, setEnrollmentId] = useState<number | null>(null);
-  const { isAuthenticated, user } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [enrolling, setEnrolling] = useState(false);
+  const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchCourseDetails = () => {
-      if (!courseId) return;
+    const fetchCourseDetails = async () => {
+      if (!id) return;
       
-      // Get course details
-      const fetchedCourse = getCourseById(parseInt(courseId));
-      if (fetchedCourse) {
-        setCourse(fetchedCourse);
-        
-        // Get chapters for this course
-        const fetchedChapters = getChaptersByCourseId(parseInt(courseId));
-        setChapters(fetchedChapters);
-        
-        // Check if user is enrolled
-        if (isAuthenticated && user) {
-          const enrollment = mockEnrollments.find(
-            (e) => e.courseId === parseInt(courseId) && e.userId === user.userId
-          );
-          
-          if (enrollment) {
-            setIsEnrolled(true);
-            setEnrollmentId(enrollment.enrollmentId);
-          }
-        }
+      try {
+        const courseData = await coursesAPI.getCourseDetails(Number(id));
+        setCourse(courseData);
+      } catch (error) {
+        console.error('Error fetching course details:', error);
+        setError('Không thể tải thông tin khóa học. Vui lòng thử lại sau.');
+      } finally {
+        setIsLoading(false);
       }
-      
-      setIsLoading(false);
     };
-    
-    fetchCourseDetails();
-  }, [courseId, isAuthenticated, user]);
 
-  const handleEnroll = () => {
+    fetchCourseDetails();
+  }, [id]);
+
+  const handleEnroll = async () => {
     if (!isAuthenticated) {
-      navigate("/login");
+      navigate('/login', { state: { from: `/courses/${id}` } });
       return;
     }
-    
-    // Simulate enrollment API call
-    setIsLoading(true);
-    
-    setTimeout(() => {
-      // In a real app, we would make an API call to enroll
-      const newEnrollmentId = Math.floor(Math.random() * 1000) + 1;
-      setIsEnrolled(true);
-      setEnrollmentId(newEnrollmentId);
-      setIsLoading(false);
-      
-      toast({
-        title: "Thành công",
-        description: "Bạn đã đăng ký khóa học thành công",
-      });
-    }, 1000);
+
+    if (!id) return;
+
+    setEnrolling(true);
+    try {
+      await enrollmentsAPI.enrollCourse(Number(id));
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Error enrolling in course:', error);
+      setError('Không thể đăng ký khóa học. Vui lòng thử lại sau.');
+    } finally {
+      setEnrolling(false);
+    }
   };
 
-  const handleContinueLearning = () => {
-    if (!course || !chapters.length || chapters[0].lessons.length === 0) return;
-    
-    // Navigate to the first lesson if no current lesson, or to the current lesson
-    const firstLessonId = chapters[0].lessons[0].lessonId;
-    navigate(`/learning/${courseId}/${firstLessonId}`);
-  };
+  // Tính tổng số bài học
+  const totalLessons = course?.chapters?.reduce(
+    (acc, chapter) => acc + (chapter.lessons?.length || 0),
+    0
+  ) || 0;
 
   if (isLoading) {
     return (
-      <div className="flex flex-col min-h-screen">
-        <Header />
-        <main className="flex-grow flex items-center justify-center">
-          <div className="text-xl text-gray-600">Đang tải thông tin khóa học...</div>
-        </main>
-        <Footer />
-      </div>
+      <Layout>
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
+      </Layout>
     );
   }
 
-  if (!course) {
+  if (error || !course) {
     return (
-      <div className="flex flex-col min-h-screen">
-        <Header />
-        <main className="flex-grow flex items-center justify-center">
-          <div className="text-center p-8">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-edu-primary mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <h1 className="text-2xl font-bold text-red-600 mb-4">Không Tìm Thấy Khóa Học</h1>
-            <p className="text-gray-600 mb-6">Không tìm thấy khóa học mà bạn đang tìm kiếm.</p>
-            <p className="text-gray-600 mb-6">Cơ sở dữ liệu chưa có dữ liệu hoặc khóa học không tồn tại.</p>
-            <Link to="/courses">
-              <Button>Trở Về Trang Khóa Học</Button>
-            </Link>
-          </div>
-        </main>
-        <Footer />
-      </div>
+      <Layout>
+        <div className="container mx-auto px-4 py-12 text-center">
+          <h2 className="text-2xl text-red-500 mb-4">Đã xảy ra lỗi</h2>
+          <p className="mb-6">{error || 'Không tìm thấy khóa học'}</p>
+          <Button onClick={() => navigate(-1)}>Quay lại</Button>
+        </div>
+      </Layout>
     );
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header />
-      
-      <main className="flex-grow">
-        {/* Course Header */}
-        <section className="bg-edu-primary text-white py-12 md:py-16">
-          <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-              <div>
-                <h1 className="text-3xl md:text-4xl font-bold mb-4">{course.title}</h1>
-                <p className="text-lg mb-6">{course.description}</p>
-                
-                <div className="flex flex-wrap gap-4 mb-8">
-                  <div className="bg-white/10 px-4 py-2 rounded-md">
-                    <div className="text-2xl font-bold">{course.chaptersCount}</div>
-                    <div className="text-sm">Chương</div>
-                  </div>
-                  <div className="bg-white/10 px-4 py-2 rounded-md">
-                    <div className="text-2xl font-bold">{course.lessonsCount}</div>
-                    <div className="text-sm">Bài học</div>
-                  </div>
-                  <div className="bg-white/10 px-4 py-2 rounded-md">
-                    <div className="text-2xl font-bold">{course.enrolledCount}</div>
-                    <div className="text-sm">Học viên</div>
-                  </div>
-                </div>
-                
-                {isEnrolled ? (
-                  <Button 
-                    size="lg"
-                    className="bg-white text-edu-primary hover:bg-gray-100"
-                    onClick={handleContinueLearning}
-                  >
-                    Tiếp Tục Học
-                  </Button>
-                ) : (
-                  <Button 
-                    size="lg"
-                    className="bg-white text-edu-primary hover:bg-gray-100"
-                    onClick={handleEnroll}
-                    disabled={isLoading}
-                  >
-                    {isLoading ? "Đang xử lý..." : "Đăng Ký Ngay"}
-                  </Button>
-                )}
-              </div>
-              
-              <div className="hidden lg:block">
-                <img 
-                  src={course.thumbnail} 
-                  alt={course.title} 
-                  className="w-full h-auto rounded-xl shadow-lg"
-                />
-              </div>
+    <Layout>
+      {/* Course Header */}
+      <div className="bg-gradient-to-r from-brand-indigo to-brand-blue text-white py-16">
+        <div className="container mx-auto px-4">
+          <h1 className="text-3xl md:text-4xl font-bold mb-4">{course.title}</h1>
+          <div className="flex flex-wrap items-center gap-4 mb-6">
+            <div className="flex items-center bg-white/20 px-4 py-2 rounded-full">
+              <Clock size={16} className="mr-2" />
+              <span>8 tuần</span>
+            </div>
+            <div className="flex items-center bg-white/20 px-4 py-2 rounded-full">
+              <BookOpen size={16} className="mr-2" />
+              <span>{totalLessons} bài học</span>
+            </div>
+            <div className="flex items-center bg-white/20 px-4 py-2 rounded-full">
+              <FileText size={16} className="mr-2" />
+              <span>{course.chapters?.length || 0} chương</span>
             </div>
           </div>
-        </section>
-        
-        {/* Course Content */}
-        <section className="py-12 bg-white">
-          <div className="container mx-auto px-4">
-            <h2 className="text-2xl font-bold mb-6 text-edu-dark">Nội Dung Khóa Học</h2>
-            
-            {chapters.length === 0 ? (
-              <div className="bg-gray-100 p-8 rounded-lg text-center">
-                <p className="text-gray-600">Nội dung của khóa học này đang được chuẩn bị.</p>
-              </div>
-            ) : (
-              <Accordion type="single" collapsible className="w-full">
-                {chapters.map((chapter) => (
-                  <AccordionItem key={chapter.chapterId} value={`chapter-${chapter.chapterId}`}>
-                    <AccordionTrigger className="text-lg font-medium py-4 hover:no-underline">
-                      <div className="flex items-start">
-                        <span className="text-left">{chapter.title}</span>
-                        <span className="text-sm text-gray-500 ml-2">({chapter.lessons.length} bài học)</span>
-                      </div>
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <div className="pl-4 py-2">
-                        <p className="text-gray-600 mb-4">{chapter.description}</p>
-                        
-                        <div className="space-y-3">
-                          {chapter.lessons.map((lesson, index) => (
-                            <div key={lesson.lessonId} className="flex items-center p-3 bg-gray-50 rounded-md">
-                              <div className="w-8 h-8 rounded-full bg-edu-accent/50 flex items-center justify-center mr-3">
-                                {index + 1}
-                              </div>
-                              <div className="flex-grow">
-                                <h4 className="font-medium">{lesson.title}</h4>
-                              </div>
-                              {isEnrolled ? (
-                                <Link to={`/learning/${courseId}/${lesson.lessonId}`}>
-                                  <Button size="sm" variant="outline">Xem</Button>
-                                </Link>
-                              ) : (
-                                <Button size="sm" variant="outline" disabled>Khóa</Button>
-                              )}
-                            </div>
-                          ))}
+          <p className="text-lg max-w-3xl">{course.description}</p>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Course Content */}
+          <div className="lg:col-span-2">
+            <h2 className="text-2xl font-bold mb-6">Nội dung khóa học</h2>
+            <div className="space-y-6">
+              {course.chapters && course.chapters.map((chapter: Chapter) => (
+                <div key={chapter.chapter_id} className="border rounded-lg overflow-hidden">
+                  <div className="bg-gray-100 p-4">
+                    <h3 className="text-lg font-semibold">
+                      Chương {chapter.chapter_order}: {chapter.title}
+                    </h3>
+                    {chapter.description && <p className="text-gray-600 mt-1">{chapter.description}</p>}
+                  </div>
+                  <div className="divide-y">
+                    {chapter.lessons?.map((lesson, index) => (
+                      <div key={lesson.lesson_id} className="p-4 flex justify-between items-center lesson-card">
+                        <div className="flex items-center">
+                          <span className="mr-3 text-gray-500">
+                            {String(index + 1).padStart(2, '0')}
+                          </span>
+                          <span>{lesson.title}</span>
                         </div>
+                        <Button variant="ghost" size="sm" disabled>
+                          <Clock size={14} className="mr-1" />
+                          <span>10 phút</span>
+                        </Button>
                       </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
-            )}
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        </section>
-        
-        {/* Call to Action */}
-        <section className="py-12 bg-gray-50">
-          <div className="container mx-auto px-4 text-center">
-            <h2 className="text-2xl font-bold mb-4 text-edu-dark">Sẵn sàng để bắt đầu học?</h2>
-            <p className="text-gray-600 mb-8 max-w-2xl mx-auto">
-              Tham gia cùng hàng nghìn học viên đang cải thiện kỹ năng và sự nghiệp của họ với EduSpark.
-            </p>
-            
-            {isEnrolled ? (
-              <Button 
-                size="lg"
-                onClick={handleContinueLearning}
-              >
-                Tiếp Tục Học
-              </Button>
-            ) : (
-              <Button 
-                size="lg"
+
+          {/* Enrollment Card */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-24 bg-white border rounded-lg p-6 shadow-lg">
+              <div className="mb-6">
+                <img
+                  src={course.thumbnail || "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b"}
+                  alt={course.title}
+                  className="w-full h-48 object-cover rounded-md"
+                />
+              </div>
+              <div className="mb-6">
+                <h3 className="text-2xl font-bold mb-2">Miễn phí</h3>
+                <ul className="space-y-3">
+                  <li className="flex items-center text-gray-700">
+                    <Award size={18} className="mr-3 text-brand-blue" />
+                    <span>Chứng chỉ hoàn thành</span>
+                  </li>
+                  <li className="flex items-center text-gray-700">
+                    <Clock size={18} className="mr-3 text-brand-blue" />
+                    <span>Truy cập trọn đời</span>
+                  </li>
+                  <li className="flex items-center text-gray-700">
+                    <BookOpen size={18} className="mr-3 text-brand-blue" />
+                    <span>{totalLessons} bài học</span>
+                  </li>
+                </ul>
+              </div>
+              <Button
+                variant="gradient"
+                className="w-full"
                 onClick={handleEnroll}
-                disabled={isLoading}
+                disabled={enrolling}
               >
-                {isLoading ? "Đang xử lý..." : "Đăng Ký Ngay"}
+                {enrolling ? 'Đang xử lý...' : 'Đăng ký khóa học'}
+                <ArrowRight size={16} className="ml-2" />
               </Button>
-            )}
+            </div>
           </div>
-        </section>
-      </main>
-      
-      <Footer />
-    </div>
+        </div>
+      </div>
+    </Layout>
   );
 };
 

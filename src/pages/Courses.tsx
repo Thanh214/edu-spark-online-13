@@ -1,110 +1,154 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import { mockCourses } from "@/utils/mockData";
-import { Search } from "lucide-react";
+
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { Search, BookOpen, Filter } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import Layout from '@/components/Layout';
+import { coursesAPI } from '@/api';
+import { Course } from '@/types';
+import { truncateText } from '@/lib/utils';
 
 const Courses = () => {
-  const [searchTerm, setSearchTerm] = useState("");
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Filter courses based on search term
-  const filteredCourses = mockCourses.filter(course => 
-    course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    course.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const data = await coursesAPI.getAllCourses();
+        setCourses(data);
+        setFilteredCourses(data);
+      } catch (error) {
+        console.error('Error fetching courses:', error);
+        setError('Không thể tải danh sách khóa học. Vui lòng thử lại sau.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const hasAnyCourses = mockCourses.length > 0;
+    fetchCourses();
+  }, []);
+
+  // Handle search
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!searchQuery.trim()) {
+      setFilteredCourses(courses);
+      return;
+    }
+    
+    const query = searchQuery.toLowerCase();
+    const filtered = courses.filter(
+      course => course.title.toLowerCase().includes(query) || 
+               course.description.toLowerCase().includes(query)
+    );
+    
+    setFilteredCourses(filtered);
+  };
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header />
-      
-      <main className="flex-grow">
-        {/* Page Header */}
-        <section className="bg-edu-primary text-white py-12">
-          <div className="container mx-auto px-4 text-center">
-            <h1 className="text-3xl font-bold mb-4">Tất Cả Khóa Học</h1>
-            <p className="text-lg mb-8 max-w-2xl mx-auto">
-              Khám phá các khóa học đa dạng được thiết kế để giúp bạn nắm vững kỹ năng mới và phát triển sự nghiệp.
-            </p>
-            
-            {hasAnyCourses && (
-              <div className="max-w-md mx-auto relative">
-                <Input
+    <Layout>
+      <div className="container mx-auto px-4 py-12">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold mb-4">Khám phá khóa học</h1>
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            Tìm kiếm và ghi danh vào các khóa học chất lượng cao để phát triển kỹ năng và đạt được mục tiêu của bạn
+          </p>
+        </div>
+
+        {/* Search and Filter */}
+        <div className="mb-8">
+          <div className="flex flex-col md:flex-row gap-4">
+            <form onSubmit={handleSearch} className="flex-1">
+              <div className="relative">
+                <input
                   type="text"
                   placeholder="Tìm kiếm khóa học..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 bg-white text-gray-800"
+                  className="w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                 />
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2">
+                  <Search size={18} className="text-gray-400" />
+                </div>
+                <Button 
+                  type="submit" 
+                  className="absolute right-0 top-0 bottom-0 rounded-l-none"
+                >
+                  Tìm kiếm
+                </Button>
               </div>
-            )}
+            </form>
+            
+            <div className="md:w-48">
+              <Button variant="outline" className="w-full flex items-center justify-center">
+                <Filter size={16} className="mr-2" />
+                Bộ lọc
+              </Button>
+            </div>
           </div>
-        </section>
-        
-        {/* Course Listings */}
-        <section className="py-12 bg-gray-50">
-          <div className="container mx-auto px-4">
-            {!hasAnyCourses ? (
-              <div className="text-center py-12 bg-white rounded-lg shadow-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-edu-primary mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
-                <h2 className="text-2xl font-semibold text-gray-700 mb-4">Chưa có khóa học nào</h2>
-                <p className="text-gray-600 mb-6">Hệ thống đang được cập nhật. Các khóa học sẽ sớm được thêm vào.</p>
-                <Link to="/">
-                  <Button>Quay Lại Trang Chủ</Button>
-                </Link>
-              </div>
-            ) : filteredCourses.length === 0 ? (
-              <div className="text-center py-12">
-                <h2 className="text-2xl font-semibold text-gray-700 mb-4">Không tìm thấy khóa học</h2>
-                <p className="text-gray-600 mb-6">Hãy thử điều chỉnh từ khóa tìm kiếm.</p>
-                <Button onClick={() => setSearchTerm("")}>Xóa Tìm Kiếm</Button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {filteredCourses.map((course) => (
-                  <div key={course.courseId} className="bg-white rounded-lg overflow-hidden shadow-md card-hover">
+        </div>
+
+        {/* Courses List */}
+        {isLoading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+          </div>
+        ) : error ? (
+          <div className="text-center text-red-500 py-10">
+            <p>{error}</p>
+            <Button 
+              variant="outline" 
+              className="mt-4"
+              onClick={() => window.location.reload()}
+            >
+              Thử lại
+            </Button>
+          </div>
+        ) : filteredCourses.length === 0 ? (
+          <div className="text-center py-12">
+            <BookOpen size={48} className="mx-auto text-gray-400 mb-4" />
+            <h3 className="text-xl font-medium text-gray-700 mb-2">Không tìm thấy khóa học</h3>
+            <p className="text-gray-500">Vui lòng thử lại với từ khóa khác</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredCourses.map((course) => (
+              <Link to={`/courses/${course.course_id}`} key={course.course_id}>
+                <Card className="course-card h-full flex flex-col overflow-hidden">
+                  <div className="h-48 overflow-hidden">
                     <img 
-                      src={course.thumbnail} 
+                      src={course.thumbnail || "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b"} 
                       alt={course.title} 
-                      className="w-full h-48 object-cover"
+                      className="w-full h-full object-cover"
                     />
-                    <div className="p-6">
-                      <h3 className="text-xl font-semibold mb-2 text-edu-dark">{course.title}</h3>
-                      <p className="text-gray-600 mb-4 line-clamp-3">{course.description}</p>
-                      
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        <span className="text-xs bg-edu-accent/30 text-edu-primary px-2 py-1 rounded-full">
-                          {course.chaptersCount} chương
-                        </span>
-                        <span className="text-xs bg-edu-accent/30 text-edu-primary px-2 py-1 rounded-full">
-                          {course.lessonsCount} bài học
-                        </span>
-                        <span className="text-xs bg-edu-accent/30 text-edu-primary px-2 py-1 rounded-full">
-                          {course.enrolledCount} học viên
-                        </span>
-                      </div>
-                      
-                      <Link to={`/courses/${course.courseId}`}>
-                        <Button className="w-full">Xem Khóa Học</Button>
-                      </Link>
-                    </div>
                   </div>
-                ))}
-              </div>
-            )}
+                  <CardContent className="p-5 flex flex-col flex-grow">
+                    <h3 className="font-bold text-lg mb-2">{course.title}</h3>
+                    <p className="text-gray-600 mb-4 flex-grow">
+                      {truncateText(course.description, 100)}
+                    </p>
+                    <div className="flex items-center justify-between mt-auto pt-4 border-t">
+                      <div className="flex items-center text-sm text-gray-500">
+                        <BookOpen size={16} className="mr-1" />
+                        <span>10 bài học</span>
+                      </div>
+                      <Button variant="link" className="p-0">Xem chi tiết</Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
           </div>
-        </section>
-      </main>
-      
-      <Footer />
-    </div>
+        )}
+      </div>
+    </Layout>
   );
 };
 

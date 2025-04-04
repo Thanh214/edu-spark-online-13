@@ -1,33 +1,31 @@
 
 import { Navigate, Outlet } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { ReactNode } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 
-interface ProtectedRouteProps {
-  children?: ReactNode;
-  requiredRole?: 'admin' | 'user';
-}
+type ProtectedRouteProps = {
+  allowedRoles?: string[];
+};
 
-const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
-  const { isAuthenticated, user, isLoading } = useAuth();
+const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
+  const { user, isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
-    // You could show a loading spinner here
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  // Check for role requirements if specified
-  if (requiredRole && user?.role !== requiredRole) {
-    return <Navigate to="/" replace />;
+  if (allowedRoles && user && !allowedRoles.includes(user.role)) {
+    return <Navigate to="/unauthorized" replace />;
   }
 
-  // If there are children, render them directly
-  // This is used for nested routes
-  return children ? <>{children}</> : <Outlet />;
+  return <Outlet />;
 };
 
 export default ProtectedRoute;

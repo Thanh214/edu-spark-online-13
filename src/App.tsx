@@ -1,61 +1,51 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./contexts/AuthContext";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import Courses from "./pages/Courses";
-import CourseDetails from "./pages/CourseDetails";
-import Dashboard from "./pages/Dashboard";
-import LearningPage from "./pages/LearningPage";
-import ExamPage from "./pages/ExamPage";
-import ProtectedRoute from "./components/ProtectedRoute";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import Team from "./pages/Team";
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
-const queryClient = new QueryClient();
+// Pages
+import Home from '@/pages/Home';
+import Login from '@/pages/Login';
+import Register from '@/pages/Register';
+import Courses from '@/pages/Courses';
+import CourseDetails from '@/pages/CourseDetails';
+import Dashboard from '@/pages/Dashboard';
+import LessonPlayer from '@/pages/LessonPlayer';
+import Profile from '@/pages/Profile';
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
+// Components
+import ProtectedRoute from '@/components/ProtectedRoute';
+import { AuthProvider } from '@/contexts/AuthContext';
+
+const App = () => {
+  return (
     <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/courses" element={<Courses />} />
-            <Route path="/courses/:courseId" element={<CourseDetails />} />
-            <Route path="/team" element={<Team />} />
-            
-            {/* Protected Routes */}
-            <Route element={<ProtectedRoute />}>
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/learning/:courseId/:lessonId" element={<LearningPage />} />
-              <Route path="/exam/:examId" element={<ExamPage />} />
-            </Route>
-            
-            {/* Admin Routes */}
-            <Route path="/admin/*" element={
-              <ProtectedRoute requiredRole="admin">
-                <AdminDashboard />
-              </ProtectedRoute>
-            } />
-            
-            {/* 404 Page */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+      <Router>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/courses" element={<Courses />} />
+          <Route path="/courses/:id" element={<CourseDetails />} />
+
+          {/* Protected Routes */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/learn/:courseId" element={<LessonPlayer />} />
+            <Route path="/learn/:courseId/:lessonId" element={<LessonPlayer />} />
+          </Route>
+
+          {/* Admin Routes */}
+          <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+            <Route path="/admin" element={<div>Admin Dashboard (Trang Admin sẽ được phát triển sau)</div>} />
+          </Route>
+
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+      </Router>
     </AuthProvider>
-  </QueryClientProvider>
-);
+  );
+};
 
 export default App;
