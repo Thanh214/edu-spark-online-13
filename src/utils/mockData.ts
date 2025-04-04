@@ -8,6 +8,7 @@ export interface Course {
   chaptersCount?: number;
   lessonsCount?: number;
   enrolledCount?: number;
+  category?: string; // Added category property to the Course interface
 }
 
 export interface Chapter {
