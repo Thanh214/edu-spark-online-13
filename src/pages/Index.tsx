@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -8,6 +7,7 @@ import { mockCourses } from "@/utils/mockData";
 const Index = () => {
   // Featured courses - just showing the first 3
   const featuredCourses = mockCourses.slice(0, 3);
+  const hasFeaturedCourses = featuredCourses.length > 0;
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -46,35 +46,50 @@ const Index = () => {
               <p className="text-lg text-gray-600">Khám phá các lộ trình học tập phổ biến nhất của chúng tôi</p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {featuredCourses.map((course) => (
-                <div key={course.courseId} className="bg-white rounded-lg overflow-hidden shadow-md card-hover">
-                  <img 
-                    src={course.thumbnail} 
-                    alt={course.title} 
-                    className="w-full h-48 object-cover"
-                  />
-                  <div className="p-6">
-                    <h3 className="text-xl font-semibold mb-2 text-edu-dark">{course.title}</h3>
-                    <p className="text-gray-600 mb-4 line-clamp-2">{course.description}</p>
-                    <div className="flex justify-between items-center">
-                      <div className="text-sm text-gray-500">
-                        {course.lessonsCount} bài học • {course.enrolledCount} học viên
+            {hasFeaturedCourses ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {featuredCourses.map((course) => (
+                  <div key={course.courseId} className="bg-white rounded-lg overflow-hidden shadow-md card-hover">
+                    <img 
+                      src={course.thumbnail} 
+                      alt={course.title} 
+                      className="w-full h-48 object-cover"
+                    />
+                    <div className="p-6">
+                      <h3 className="text-xl font-semibold mb-2 text-edu-dark">{course.title}</h3>
+                      <p className="text-gray-600 mb-4 line-clamp-2">{course.description}</p>
+                      <div className="flex justify-between items-center">
+                        <div className="text-sm text-gray-500">
+                          {course.lessonsCount} bài học • {course.enrolledCount} học viên
+                        </div>
+                        <Link to={`/courses/${course.courseId}`}>
+                          <Button size="sm">Xem Khóa Học</Button>
+                        </Link>
                       </div>
-                      <Link to={`/courses/${course.courseId}`}>
-                        <Button size="sm">Xem Khóa Học</Button>
-                      </Link>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 bg-white rounded-lg shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-edu-primary mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+                <h3 className="text-xl font-semibold mb-2 text-edu-dark">Chưa có khóa học nào</h3>
+                <p className="text-gray-600 mb-6">Các khóa học đang được phát triển. Vui lòng quay lại sau.</p>
+                <Link to="/register">
+                  <Button>Đăng Ký Nhận Thông Báo</Button>
+                </Link>
+              </div>
+            )}
             
-            <div className="text-center mt-12">
-              <Link to="/courses">
-                <Button variant="outline" size="lg">Xem Tất Cả Khóa Học</Button>
-              </Link>
-            </div>
+            {hasFeaturedCourses && (
+              <div className="text-center mt-12">
+                <Link to="/courses">
+                  <Button variant="outline" size="lg">Xem Tất Cả Khóa Học</Button>
+                </Link>
+              </div>
+            )}
           </div>
         </section>
         

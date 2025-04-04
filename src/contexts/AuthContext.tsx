@@ -1,5 +1,6 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { authAPI } from '../utils/api';
+import { toast } from 'sonner';
 
 interface User {
   userId: number;
@@ -12,9 +13,11 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  error: string | null;
   login: (email: string, password: string) => Promise<boolean>;
   register: (fullName: string, email: string, password: string) => Promise<boolean>;
   logout: () => void;
+  clearError: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -34,38 +37,71 @@ interface AuthProviderProps {
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const clearError = () => setError(null);
 
   useEffect(() => {
     // Check for saved authentication
+    const token = localStorage.getItem('token');
     const savedUser = localStorage.getItem('eduUser');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-    setIsLoading(false);
-  }, []);
-
-  // In a real application, you would integrate with an API
-  const login = async (email: string, password: string): Promise<boolean> => {
-    setIsLoading(true);
     
-    try {
-      // Simulated API call
-      // In real app, you would call your actual API endpoint
-      await new Promise(resolve => setTimeout(resolve, 1000));
+    if (token && savedUser) {
+      setUser(JSON.parse(savedUser));
       
-      // Mock successful login - this would come from your backend
-      const mockUser: User = {
-        userId: 1,
-        fullName: "Test User",
-        email,
-        role: email.includes('admin') ? 'admin' : 'user'
+      // Xác thực token bằng cách gọi API profile
+      const verifyToken = async () => {
+        try {
+          const userData = await authAPI.getProfile();
+          setUser({
+            userId: userData.user_id,
+            fullName: userData.full_name,
+            email: userData.email,
+            role: userData.role
+          });
+        } catch (error: any) {
+          console.error('Token không hợp lệ:', error);
+          // Hiển thị thông báo lỗi nếu cần
+          if (error.message) {
+            toast.error(error.message);
+          }
+          logout();
+        } finally {
+          setIsLoading(false);
+        }
       };
       
-      setUser(mockUser);
-      localStorage.setItem('eduUser', JSON.stringify(mockUser));
+      verifyToken();
+    } else {
+      setIsLoading(false);
+    }
+    
+  }, []);
+
+  const login = async (email: string, password: string): Promise<boolean> => {
+    setIsLoading(true);
+    clearError();
+    
+    try {
+      const response = await authAPI.login(email, password);
+      
+      const userData = {
+        userId: response.user.user_id,
+        fullName: response.user.full_name,
+        email: response.user.email,
+        role: response.user.role
+      };
+      
+      setUser(userData);
+      localStorage.setItem('token', response.token);
+      localStorage.setItem('eduUser', JSON.stringify(userData));
+      toast.success('Đăng nhập thành công');
       return true;
-    } catch (error) {
-      console.error('Login failed:', error);
+    } catch (error: any) {
+      console.error('Đăng nhập thất bại:', error);
+      const errorMessage = error.message || 'Đăng nhập thất bại. Vui lòng thử lại.';
+      setError(errorMessage);
+      toast.error(errorMessage);
       return false;
     } finally {
       setIsLoading(false);
@@ -74,24 +110,28 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const register = async (fullName: string, email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
+    clearError();
     
     try {
-      // Simulated API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await authAPI.register(fullName, email, password);
       
-      // Mock successful registration
-      const mockUser: User = {
-        userId: Math.floor(Math.random() * 1000) + 1,
-        fullName,
-        email,
-        role: 'user'
+      const userData = {
+        userId: response.user.user_id,
+        fullName: response.user.full_name,
+        email: response.user.email,
+        role: response.user.role
       };
       
-      setUser(mockUser);
-      localStorage.setItem('eduUser', JSON.stringify(mockUser));
+      setUser(userData);
+      localStorage.setItem('token', response.token);
+      localStorage.setItem('eduUser', JSON.stringify(userData));
+      toast.success('Đăng ký tài khoản thành công');
       return true;
-    } catch (error) {
-      console.error('Registration failed:', error);
+    } catch (error: any) {
+      console.error('Đăng ký thất bại:', error);
+      const errorMessage = error.message || 'Không thể tạo tài khoản. Vui lòng thử lại.';
+      setError(errorMessage);
+      toast.error(errorMessage);
       return false;
     } finally {
       setIsLoading(false);
@@ -100,16 +140,20 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const logout = () => {
     setUser(null);
+    localStorage.removeItem('token');
     localStorage.removeItem('eduUser');
+    toast.info('Đã đăng xuất');
   };
 
   const value = {
     user,
     isAuthenticated: !!user,
     isLoading,
+    error,
     login,
     register,
-    logout
+    logout,
+    clearError
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

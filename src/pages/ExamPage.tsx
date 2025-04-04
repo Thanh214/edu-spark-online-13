@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -94,8 +93,8 @@ const ExamPage = () => {
     
     // In a real app, we would submit the exam results to the server
     toast({
-      title: "Exam Submitted",
-      description: `Your score: ${score.toFixed(2)}%`,
+      title: "Đã Nộp Bài",
+      description: `Điểm của bạn: ${score.toFixed(2)}%`,
     });
   };
 
@@ -104,7 +103,7 @@ const ExamPage = () => {
       <div className="flex flex-col min-h-screen">
         <Header />
         <main className="flex-grow flex items-center justify-center">
-          <div className="text-xl text-gray-600">Loading exam...</div>
+          <div className="text-xl text-gray-600">Đang tải bài kiểm tra...</div>
         </main>
         <Footer />
       </div>
@@ -116,10 +115,14 @@ const ExamPage = () => {
       <div className="flex flex-col min-h-screen">
         <Header />
         <main className="flex-grow flex items-center justify-center">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-red-600 mb-4">Exam Not Found</h1>
-            <p className="text-gray-600 mb-6">The exam you are looking for does not exist.</p>
-            <Button onClick={() => navigate(-1)}>Go Back</Button>
+          <div className="text-center p-8">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-edu-primary mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h1 className="text-2xl font-bold text-red-600 mb-4">Không Tìm Thấy Bài Kiểm Tra</h1>
+            <p className="text-gray-600 mb-6">Bài kiểm tra bạn đang tìm kiếm không tồn tại.</p>
+            <p className="text-gray-600 mb-6">Cơ sở dữ liệu chưa có dữ liệu hoặc bài kiểm tra đã bị xóa.</p>
+            <Button onClick={() => navigate(-1)}>Quay Lại</Button>
           </div>
         </main>
         <Footer />
@@ -137,7 +140,7 @@ const ExamPage = () => {
           <div className="container mx-auto px-4 max-w-4xl">
             <div className="bg-white rounded-lg shadow-md p-8">
               <div className="text-center mb-8">
-                <h1 className="text-2xl font-bold text-edu-dark mb-2">Exam Results</h1>
+                <h1 className="text-2xl font-bold text-edu-dark mb-2">Kết Quả Bài Kiểm Tra</h1>
                 <p className="text-gray-600">{exam.title}</p>
               </div>
               
@@ -160,23 +163,23 @@ const ExamPage = () => {
                   </div>
                   
                   <h2 className="text-xl font-bold text-center mb-2">
-                    {isPassed ? 'Congratulations!' : 'Exam Not Passed'}
+                    {isPassed ? 'Chúc mừng!' : 'Chưa Đạt Yêu Cầu'}
                   </h2>
                   
                   <p className="text-center mb-4">
                     {isPassed
-                      ? `You've successfully passed the exam with a score of ${examScore.toFixed(2)}%.`
-                      : `You've scored ${examScore.toFixed(2)}%. The required passing score is ${exam.passingScore}%.`}
+                      ? `Bạn đã vượt qua bài kiểm tra với điểm số ${examScore.toFixed(2)}%.`
+                      : `Bạn đạt ${examScore.toFixed(2)}%. Điểm yêu cầu là ${exam.passingScore}%.`}
                   </p>
                   
                   <div className="flex justify-center">
-                    <Button onClick={() => navigate(-1)}>Return to Course</Button>
+                    <Button onClick={() => navigate(-1)}>Quay Lại Khóa Học</Button>
                   </div>
                 </div>
               </div>
               
               <div>
-                <h3 className="text-lg font-semibold mb-4">Exam Review</h3>
+                <h3 className="text-lg font-semibold mb-4">Xem Lại Bài Kiểm Tra</h3>
                 
                 {exam.questions?.map((question, index) => {
                   const userAnswer = answers[question.questionId];
@@ -241,10 +244,10 @@ const ExamPage = () => {
                       
                       <div className="mt-3 ml-11 text-sm">
                         {isCorrect ? (
-                          <div className="text-green-600">Your answer is correct!</div>
+                          <div className="text-green-600">Câu trả lời của bạn chính xác!</div>
                         ) : (
                           <div className="text-red-600">
-                            Your answer is incorrect. The correct answer is {question.correctAnswer}.
+                            Câu trả lời của bạn không chính xác. Đáp án đúng là {question.correctAnswer}.
                           </div>
                         )}
                       </div>

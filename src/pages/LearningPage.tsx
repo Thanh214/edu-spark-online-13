@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -137,7 +136,7 @@ const LearningPage = () => {
       <div className="flex flex-col min-h-screen">
         <Header />
         <main className="flex-grow flex items-center justify-center">
-          <div className="text-xl text-gray-600">Loading lesson content...</div>
+          <div className="text-xl text-gray-600">Đang tải nội dung bài học...</div>
         </main>
         <Footer />
       </div>
@@ -149,12 +148,52 @@ const LearningPage = () => {
       <div className="flex flex-col min-h-screen">
         <Header />
         <main className="flex-grow flex items-center justify-center">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-red-600 mb-4">Lesson Not Found</h1>
-            <p className="text-gray-600 mb-6">The lesson you are looking for does not exist.</p>
+          <div className="text-center p-8">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-edu-primary mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h1 className="text-2xl font-bold text-red-600 mb-4">Không Tìm Thấy Bài Học</h1>
+            <p className="text-gray-600 mb-6">Bài học bạn đang tìm kiếm không tồn tại.</p>
+            <p className="text-gray-600 mb-6">Cơ sở dữ liệu chưa có dữ liệu hoặc bài học đã bị xóa.</p>
             <Link to="/dashboard">
-              <Button>Return to Dashboard</Button>
+              <Button>Quay Lại Trang Chủ</Button>
             </Link>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!currentLesson.pages || currentLesson.pages.length === 0) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-grow flex items-center justify-center">
+          <div className="text-center p-8">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-edu-primary mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <h1 className="text-2xl font-bold text-amber-600 mb-4">Bài Học Chưa Có Nội Dung</h1>
+            <p className="text-gray-600 mb-6">Bài học này hiện chưa có nội dung nào.</p>
+            <p className="text-gray-600 mb-6">Nội dung đang được chuẩn bị và sẽ được cập nhật sớm.</p>
+            <div className="flex justify-center space-x-4">
+              {prevLesson && (
+                <Link to={`/learning/${courseId}/${prevLesson.lessonId}`}>
+                  <Button variant="outline">Bài Học Trước</Button>
+                </Link>
+              )}
+              {nextLesson && (
+                <Link to={`/learning/${courseId}/${nextLesson.lessonId}`}>
+                  <Button>Bài Học Tiếp Theo</Button>
+                </Link>
+              )}
+              {!prevLesson && !nextLesson && (
+                <Link to="/dashboard">
+                  <Button>Quay Lại Trang Chủ</Button>
+                </Link>
+              )}
+            </div>
           </div>
         </main>
         <Footer />
@@ -200,26 +239,28 @@ const LearningPage = () => {
                 </AccordionItem>
               ))}
             </Accordion>
-          </div>
-          
-          {/* Related Exams */}
-          {relatedExams.length > 0 && (
-            <div className="p-4 border-t border-gray-200">
-              <h3 className="font-semibold mb-2">Related Exams</h3>
-              <div className="space-y-2">
-                {relatedExams.map((exam) => (
-                  <Link 
-                    key={exam.examId}
-                    to={`/exam/${exam.examId}`}
-                    className="flex items-center gap-2 px-3 py-2 text-sm bg-edu-accent/20 text-edu-primary rounded-md hover:bg-edu-accent/30"
-                  >
-                    <FileText size={16} />
-                    {exam.title}
-                  </Link>
-                ))}
+            
+            {/* Exams section */}
+            {relatedExams.length > 0 && (
+              <div className="mt-4">
+                <div className="px-4 py-2 font-semibold text-sm text-gray-600 uppercase">Bài Kiểm Tra</div>
+                <div className="space-y-1 pl-4">
+                  {relatedExams.map((exam) => (
+                    <Link
+                      key={exam.examId}
+                      to={`/exam/${exam.examId}`}
+                      className="block px-4 py-2 text-sm hover:bg-gray-100 rounded-md"
+                    >
+                      <div className="flex items-center">
+                        <FileText className="h-4 w-4 mr-2 text-gray-500" />
+                        {exam.title}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
         
         {/* Mobile Sidebar Toggle */}

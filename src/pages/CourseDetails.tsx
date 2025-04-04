@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -69,8 +68,8 @@ const CourseDetails = () => {
       setIsLoading(false);
       
       toast({
-        title: "Success",
-        description: "You have successfully enrolled in this course",
+        title: "Thành công",
+        description: "Bạn đã đăng ký khóa học thành công",
       });
     }, 1000);
   };
@@ -88,7 +87,7 @@ const CourseDetails = () => {
       <div className="flex flex-col min-h-screen">
         <Header />
         <main className="flex-grow flex items-center justify-center">
-          <div className="text-xl text-gray-600">Loading course details...</div>
+          <div className="text-xl text-gray-600">Đang tải thông tin khóa học...</div>
         </main>
         <Footer />
       </div>
@@ -100,11 +99,15 @@ const CourseDetails = () => {
       <div className="flex flex-col min-h-screen">
         <Header />
         <main className="flex-grow flex items-center justify-center">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-red-600 mb-4">Course Not Found</h1>
-            <p className="text-gray-600 mb-6">The course you are looking for does not exist.</p>
+          <div className="text-center p-8">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-edu-primary mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h1 className="text-2xl font-bold text-red-600 mb-4">Không Tìm Thấy Khóa Học</h1>
+            <p className="text-gray-600 mb-6">Không tìm thấy khóa học mà bạn đang tìm kiếm.</p>
+            <p className="text-gray-600 mb-6">Cơ sở dữ liệu chưa có dữ liệu hoặc khóa học không tồn tại.</p>
             <Link to="/courses">
-              <Button>Browse All Courses</Button>
+              <Button>Trở Về Trang Khóa Học</Button>
             </Link>
           </div>
         </main>
@@ -129,15 +132,15 @@ const CourseDetails = () => {
                 <div className="flex flex-wrap gap-4 mb-8">
                   <div className="bg-white/10 px-4 py-2 rounded-md">
                     <div className="text-2xl font-bold">{course.chaptersCount}</div>
-                    <div className="text-sm">Chapters</div>
+                    <div className="text-sm">Chương</div>
                   </div>
                   <div className="bg-white/10 px-4 py-2 rounded-md">
                     <div className="text-2xl font-bold">{course.lessonsCount}</div>
-                    <div className="text-sm">Lessons</div>
+                    <div className="text-sm">Bài học</div>
                   </div>
                   <div className="bg-white/10 px-4 py-2 rounded-md">
                     <div className="text-2xl font-bold">{course.enrolledCount}</div>
-                    <div className="text-sm">Students</div>
+                    <div className="text-sm">Học viên</div>
                   </div>
                 </div>
                 
@@ -147,7 +150,7 @@ const CourseDetails = () => {
                     className="bg-white text-edu-primary hover:bg-gray-100"
                     onClick={handleContinueLearning}
                   >
-                    Continue Learning
+                    Tiếp Tục Học
                   </Button>
                 ) : (
                   <Button 
@@ -156,7 +159,7 @@ const CourseDetails = () => {
                     onClick={handleEnroll}
                     disabled={isLoading}
                   >
-                    {isLoading ? "Processing..." : "Enroll Now"}
+                    {isLoading ? "Đang xử lý..." : "Đăng Ký Ngay"}
                   </Button>
                 )}
               </div>
@@ -175,11 +178,11 @@ const CourseDetails = () => {
         {/* Course Content */}
         <section className="py-12 bg-white">
           <div className="container mx-auto px-4">
-            <h2 className="text-2xl font-bold mb-6 text-edu-dark">Course Content</h2>
+            <h2 className="text-2xl font-bold mb-6 text-edu-dark">Nội Dung Khóa Học</h2>
             
             {chapters.length === 0 ? (
               <div className="bg-gray-100 p-8 rounded-lg text-center">
-                <p className="text-gray-600">Content for this course is being prepared.</p>
+                <p className="text-gray-600">Nội dung của khóa học này đang được chuẩn bị.</p>
               </div>
             ) : (
               <Accordion type="single" collapsible className="w-full">
@@ -188,7 +191,7 @@ const CourseDetails = () => {
                     <AccordionTrigger className="text-lg font-medium py-4 hover:no-underline">
                       <div className="flex items-start">
                         <span className="text-left">{chapter.title}</span>
-                        <span className="text-sm text-gray-500 ml-2">({chapter.lessons.length} lessons)</span>
+                        <span className="text-sm text-gray-500 ml-2">({chapter.lessons.length} bài học)</span>
                       </div>
                     </AccordionTrigger>
                     <AccordionContent>
@@ -206,10 +209,10 @@ const CourseDetails = () => {
                               </div>
                               {isEnrolled ? (
                                 <Link to={`/learning/${courseId}/${lesson.lessonId}`}>
-                                  <Button size="sm" variant="outline">View</Button>
+                                  <Button size="sm" variant="outline">Xem</Button>
                                 </Link>
                               ) : (
-                                <Button size="sm" variant="outline" disabled>Locked</Button>
+                                <Button size="sm" variant="outline" disabled>Khóa</Button>
                               )}
                             </div>
                           ))}
@@ -226,9 +229,9 @@ const CourseDetails = () => {
         {/* Call to Action */}
         <section className="py-12 bg-gray-50">
           <div className="container mx-auto px-4 text-center">
-            <h2 className="text-2xl font-bold mb-4 text-edu-dark">Ready to Start Learning?</h2>
+            <h2 className="text-2xl font-bold mb-4 text-edu-dark">Sẵn sàng để bắt đầu học?</h2>
             <p className="text-gray-600 mb-8 max-w-2xl mx-auto">
-              Join thousands of students who are already advancing their careers with EduSpark.
+              Tham gia cùng hàng nghìn học viên đang cải thiện kỹ năng và sự nghiệp của họ với EduSpark.
             </p>
             
             {isEnrolled ? (
@@ -236,7 +239,7 @@ const CourseDetails = () => {
                 size="lg"
                 onClick={handleContinueLearning}
               >
-                Continue Learning
+                Tiếp Tục Học
               </Button>
             ) : (
               <Button 
@@ -244,7 +247,7 @@ const CourseDetails = () => {
                 onClick={handleEnroll}
                 disabled={isLoading}
               >
-                {isLoading ? "Processing..." : "Enroll Now"}
+                {isLoading ? "Đang xử lý..." : "Đăng Ký Ngay"}
               </Button>
             )}
           </div>

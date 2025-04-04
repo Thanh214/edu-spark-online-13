@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Input } from "@/components/ui/input";
@@ -17,6 +16,8 @@ const Courses = () => {
     course.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const hasAnyCourses = mockCourses.length > 0;
+
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
@@ -30,23 +31,36 @@ const Courses = () => {
               Khám phá các khóa học đa dạng được thiết kế để giúp bạn nắm vững kỹ năng mới và phát triển sự nghiệp.
             </p>
             
-            <div className="max-w-md mx-auto relative">
-              <Input
-                type="text"
-                placeholder="Tìm kiếm khóa học..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-white text-gray-800"
-              />
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-            </div>
+            {hasAnyCourses && (
+              <div className="max-w-md mx-auto relative">
+                <Input
+                  type="text"
+                  placeholder="Tìm kiếm khóa học..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 bg-white text-gray-800"
+                />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+              </div>
+            )}
           </div>
         </section>
         
         {/* Course Listings */}
         <section className="py-12 bg-gray-50">
           <div className="container mx-auto px-4">
-            {filteredCourses.length === 0 ? (
+            {!hasAnyCourses ? (
+              <div className="text-center py-12 bg-white rounded-lg shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-edu-primary mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+                <h2 className="text-2xl font-semibold text-gray-700 mb-4">Chưa có khóa học nào</h2>
+                <p className="text-gray-600 mb-6">Hệ thống đang được cập nhật. Các khóa học sẽ sớm được thêm vào.</p>
+                <Link to="/">
+                  <Button>Quay Lại Trang Chủ</Button>
+                </Link>
+              </div>
+            ) : filteredCourses.length === 0 ? (
               <div className="text-center py-12">
                 <h2 className="text-2xl font-semibold text-gray-700 mb-4">Không tìm thấy khóa học</h2>
                 <p className="text-gray-600 mb-6">Hãy thử điều chỉnh từ khóa tìm kiếm.</p>
