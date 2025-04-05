@@ -75,6 +75,11 @@ export const coursesAPI = {
     return response.data.data;
   },
   
+  getCourseWithDetails: async (courseId: number) => {
+    const response = await api.get(`/courses/${courseId}/details`);
+    return response.data.data;
+  },
+  
   getChapters: async (courseId: number) => {
     const response = await api.get(`/courses/${courseId}/chapters`);
     return response.data.data;
@@ -82,6 +87,11 @@ export const coursesAPI = {
   
   getLessons: async (chapterId: number) => {
     const response = await api.get(`/courses/chapters/${chapterId}/lessons`);
+    return response.data.data;
+  },
+  
+  getLessonWithPages: async (lessonId: number) => {
+    const response = await api.get(`/courses/lessons/${lessonId}/pages`);
     return response.data.data;
   }
 };
@@ -104,4 +114,4 @@ export const enrollmentsAPI = {
   }
 };
 
-export default api; 
+export default api;

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -5,14 +6,65 @@ import { toast } from "@/components/ui/use-toast";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { 
-  getCourseById, 
-  getChaptersByCourseId, 
-  getLessonById, 
-  mockExams 
-} from "@/utils/mockData";
-import { Course, Chapter, Lesson, Page } from "@/utils/mockData";
+import { coursesAPI, enrollmentsAPI } from "@/utils/api";
 import { ChevronLeft, ChevronRight, Menu, X, FileText } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+
+interface Document {
+  document_id: number;
+  lesson_id: number;
+  title: string;
+  file_path: string;
+  uploaded_at: string;
+}
+
+interface Page {
+  page_id: number;
+  lesson_id: number;
+  page_number: number;
+  content: string | null;
+  created_at: string;
+}
+
+interface Lesson {
+  lesson_id: number;
+  chapter_id: number;
+  title: string;
+  content: string | null;
+  lesson_order: number;
+  created_at: string;
+  pages?: Page[];
+  documents?: Document[];
+}
+
+interface Chapter {
+  chapter_id: number;
+  course_id: number;
+  title: string;
+  description: string | null;
+  chapter_order: number;
+  created_at: string;
+  lessons: Lesson[];
+}
+
+interface Course {
+  course_id: number;
+  title: string;
+  description: string;
+  thumbnail: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface Exam {
+  exam_id: number;
+  course_id: number | null;
+  chapter_id: number | null;
+  title: string;
+  time_limit: number | null;
+  total_questions: number | null;
+  passing_score: number | null;
+}
 
 const LearningPage = () => {
   const { courseId, lessonId } = useParams<{ courseId: string; lessonId: string }>();
@@ -23,37 +75,66 @@ const LearningPage = () => {
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
+  const [relatedExams, setRelatedExams] = useState<Exam[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchData = () => {
+    const fetchData = async () => {
       if (!courseId || !lessonId) return;
       
-      // Get course details
-      const fetchedCourse = getCourseById(parseInt(courseId));
-      if (fetchedCourse) {
-        setCourse(fetchedCourse);
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        const courseIdNum = parseInt(courseId);
+        const lessonIdNum = parseInt(lessonId);
+        
+        // Get course details
+        const courseData = await coursesAPI.getCourseById(courseIdNum);
+        setCourse(courseData);
         
         // Get chapters for this course
-        const fetchedChapters = getChaptersByCourseId(parseInt(courseId));
-        setChapters(fetchedChapters);
+        const chaptersData = await coursesAPI.getChapters(courseIdNum);
+        setChapters(chaptersData);
         
-        // Get current lesson
-        const fetchedLesson = getLessonById(parseInt(lessonId));
-        if (fetchedLesson) {
-          setCurrentLesson(fetchedLesson);
+        // Get current lesson with pages
+        const lessonData = await coursesAPI.getLessonWithPages(lessonIdNum);
+        if (lessonData) {
+          setCurrentLesson(lessonData);
           
           // Set first page as current if available
-          if (fetchedLesson.pages && fetchedLesson.pages.length > 0) {
-            setCurrentPage(fetchedLesson.pages[0]);
+          if (lessonData.pages && lessonData.pages.length > 0) {
+            // Sort pages by page_number
+            const sortedPages = [...lessonData.pages].sort((a, b) => a.page_number - b.page_number);
+            setCurrentPage(sortedPages[0]);
             setCurrentPageIndex(0);
           } else {
             setCurrentPage(null);
           }
+          
+          // Update progress for this lesson
+          try {
+            await enrollmentsAPI.updateProgress(lessonIdNum, true);
+          } catch (progressError) {
+            console.error("Error updating lesson progress:", progressError);
+          }
         }
+        
+        // TODO: Fetch related exams once the API is available
+        setRelatedExams([]);
+        
+      } catch (err: any) {
+        console.error("Error loading lesson:", err);
+        setError(err.message || "Không thể tải nội dung bài học");
+        toast({
+          title: "Lỗi",
+          description: "Không thể tải nội dung bài học. Vui lòng thử lại sau.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
       }
-      
-      setIsLoading(false);
     };
     
     fetchData();
@@ -65,24 +146,26 @@ const LearningPage = () => {
     
     let allLessons: Lesson[] = [];
     chapters.forEach(chapter => {
-      allLessons = [...allLessons, ...chapter.lessons];
+      if (chapter.lessons) {
+        allLessons = [...allLessons, ...chapter.lessons];
+      }
     });
     
     // Sort lessons by chapter order and lesson order
     allLessons.sort((a, b) => {
-      const chapterA = chapters.find(ch => ch.chapterId === a.chapterId);
-      const chapterB = chapters.find(ch => ch.chapterId === b.chapterId);
+      const chapterA = chapters.find(ch => ch.chapter_id === a.chapter_id);
+      const chapterB = chapters.find(ch => ch.chapter_id === b.chapter_id);
       
       if (!chapterA || !chapterB) return 0;
       
-      if (chapterA.chapterOrder !== chapterB.chapterOrder) {
-        return chapterA.chapterOrder - chapterB.chapterOrder;
+      if (chapterA.chapter_order !== chapterB.chapter_order) {
+        return chapterA.chapter_order - chapterB.chapter_order;
       }
       
-      return a.lessonOrder - b.lessonOrder;
+      return a.lesson_order - b.lesson_order;
     });
     
-    const currentIndex = allLessons.findIndex(lesson => lesson.lessonId === currentLesson.lessonId);
+    const currentIndex = allLessons.findIndex(lesson => lesson.lesson_id === currentLesson.lesson_id);
     
     return {
       next: currentIndex < allLessons.length - 1 ? allLessons[currentIndex + 1] : null,
@@ -96,40 +179,30 @@ const LearningPage = () => {
     if (!currentLesson?.pages || currentPageIndex >= currentLesson.pages.length - 1) {
       // If no more pages, go to next lesson
       if (nextLesson) {
-        navigate(`/learning/${courseId}/${nextLesson.lessonId}`);
+        navigate(`/learning/${courseId}/${nextLesson.lesson_id}`);
       }
       return;
     }
     
-    setCurrentPage(currentLesson.pages[currentPageIndex + 1]);
+    // Sort pages by page_number before accessing next page
+    const sortedPages = [...currentLesson.pages].sort((a, b) => a.page_number - b.page_number);
+    setCurrentPage(sortedPages[currentPageIndex + 1]);
     setCurrentPageIndex(currentPageIndex + 1);
   };
 
   const handlePrevPage = () => {
-    if (currentPageIndex > 0) {
-      setCurrentPage(currentLesson?.pages?.[currentPageIndex - 1] || null);
+    if (currentPageIndex > 0 && currentLesson?.pages) {
+      // Sort pages by page_number before accessing previous page
+      const sortedPages = [...currentLesson.pages].sort((a, b) => a.page_number - b.page_number);
+      setCurrentPage(sortedPages[currentPageIndex - 1]);
       setCurrentPageIndex(currentPageIndex - 1);
     } else {
       // If on first page, go to previous lesson
       if (prevLesson) {
-        navigate(`/learning/${courseId}/${prevLesson.lessonId}`);
+        navigate(`/learning/${courseId}/${prevLesson.lesson_id}`);
       }
     }
   };
-
-  // Find relevant exams
-  const findRelatedExams = () => {
-    if (!courseId || !currentLesson) return [];
-    
-    const courseExams = mockExams.filter(exam => 
-      exam.courseId === parseInt(courseId) || 
-      (exam.chapterId && exam.chapterId === currentLesson.chapterId)
-    );
-    
-    return courseExams;
-  };
-
-  const relatedExams = findRelatedExams();
 
   if (isLoading) {
     return (
@@ -143,7 +216,7 @@ const LearningPage = () => {
     );
   }
 
-  if (!course || !currentLesson) {
+  if (error || !course || !currentLesson) {
     return (
       <div className="flex flex-col min-h-screen">
         <Header />
@@ -153,10 +226,9 @@ const LearningPage = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <h1 className="text-2xl font-bold text-red-600 mb-4">Không Tìm Thấy Bài Học</h1>
-            <p className="text-gray-600 mb-6">Bài học bạn đang tìm kiếm không tồn tại.</p>
-            <p className="text-gray-600 mb-6">Cơ sở dữ liệu chưa có dữ liệu hoặc bài học đã bị xóa.</p>
-            <Link to="/dashboard">
-              <Button>Quay Lại Trang Chủ</Button>
+            <p className="text-gray-600 mb-6">{error || "Bài học bạn đang tìm kiếm không tồn tại."}</p>
+            <Link to="/courses">
+              <Button>Quay Lại Danh Sách Khóa Học</Button>
             </Link>
           </div>
         </main>
@@ -165,7 +237,9 @@ const LearningPage = () => {
     );
   }
 
-  if (!currentLesson.pages || currentLesson.pages.length === 0) {
+  const hasPages = currentLesson.pages && currentLesson.pages.length > 0;
+
+  if (!hasPages && !currentLesson.content) {
     return (
       <div className="flex flex-col min-h-screen">
         <Header />
@@ -179,18 +253,18 @@ const LearningPage = () => {
             <p className="text-gray-600 mb-6">Nội dung đang được chuẩn bị và sẽ được cập nhật sớm.</p>
             <div className="flex justify-center space-x-4">
               {prevLesson && (
-                <Link to={`/learning/${courseId}/${prevLesson.lessonId}`}>
+                <Link to={`/learning/${courseId}/${prevLesson.lesson_id}`}>
                   <Button variant="outline">Bài Học Trước</Button>
                 </Link>
               )}
               {nextLesson && (
-                <Link to={`/learning/${courseId}/${nextLesson.lessonId}`}>
+                <Link to={`/learning/${courseId}/${nextLesson.lesson_id}`}>
                   <Button>Bài Học Tiếp Theo</Button>
                 </Link>
               )}
               {!prevLesson && !nextLesson && (
-                <Link to="/dashboard">
-                  <Button>Quay Lại Trang Chủ</Button>
+                <Link to="/courses">
+                  <Button>Quay Lại Danh Sách Khóa Học</Button>
                 </Link>
               )}
             </div>
@@ -213,20 +287,20 @@ const LearningPage = () => {
           </div>
           
           <div className="flex-grow overflow-y-auto">
-            <Accordion type="multiple" defaultValue={chapters.map(ch => `chapter-${ch.chapterId}`)}>
+            <Accordion type="multiple" defaultValue={chapters.map(ch => `chapter-${ch.chapter_id}`)}>
               {chapters.map((chapter) => (
-                <AccordionItem key={chapter.chapterId} value={`chapter-${chapter.chapterId}`}>
+                <AccordionItem key={chapter.chapter_id} value={`chapter-${chapter.chapter_id}`}>
                   <AccordionTrigger className="px-4">
                     {chapter.title}
                   </AccordionTrigger>
                   <AccordionContent>
                     <div className="space-y-1 pl-4">
-                      {chapter.lessons.map((lesson) => (
+                      {chapter.lessons && chapter.lessons.map((lesson) => (
                         <Link 
-                          key={lesson.lessonId}
-                          to={`/learning/${courseId}/${lesson.lessonId}`}
+                          key={lesson.lesson_id}
+                          to={`/learning/${courseId}/${lesson.lesson_id}`}
                           className={`block px-4 py-2 text-sm rounded-md ${
-                            lesson.lessonId === currentLesson.lessonId 
+                            lesson.lesson_id === currentLesson.lesson_id 
                               ? 'bg-edu-primary text-white' 
                               : 'hover:bg-gray-100'
                           }`}
@@ -247,8 +321,8 @@ const LearningPage = () => {
                 <div className="space-y-1 pl-4">
                   {relatedExams.map((exam) => (
                     <Link
-                      key={exam.examId}
-                      to={`/exam/${exam.examId}`}
+                      key={exam.exam_id}
+                      to={`/exam/${exam.exam_id}`}
                       className="block px-4 py-2 text-sm hover:bg-gray-100 rounded-md"
                     >
                       <div className="flex items-center">
@@ -283,20 +357,20 @@ const LearningPage = () => {
               </div>
               
               <div className="flex-grow overflow-y-auto">
-                <Accordion type="multiple" defaultValue={chapters.map(ch => `chapter-${ch.chapterId}`)}>
+                <Accordion type="multiple" defaultValue={chapters.map(ch => `chapter-${ch.chapter_id}`)}>
                   {chapters.map((chapter) => (
-                    <AccordionItem key={chapter.chapterId} value={`chapter-${chapter.chapterId}`}>
+                    <AccordionItem key={chapter.chapter_id} value={`chapter-${chapter.chapter_id}`}>
                       <AccordionTrigger className="px-4">
                         {chapter.title}
                       </AccordionTrigger>
                       <AccordionContent>
                         <div className="space-y-1 pl-4">
-                          {chapter.lessons.map((lesson) => (
+                          {chapter.lessons && chapter.lessons.map((lesson) => (
                             <Link 
-                              key={lesson.lessonId}
-                              to={`/learning/${courseId}/${lesson.lessonId}`}
+                              key={lesson.lesson_id}
+                              to={`/learning/${courseId}/${lesson.lesson_id}`}
                               className={`block px-4 py-2 text-sm rounded-md ${
-                                lesson.lessonId === currentLesson.lessonId 
+                                lesson.lesson_id === currentLesson.lesson_id 
                                   ? 'bg-edu-primary text-white' 
                                   : 'hover:bg-gray-100'
                               }`}
@@ -314,12 +388,12 @@ const LearningPage = () => {
                 {/* Related Exams */}
                 {relatedExams.length > 0 && (
                   <div className="p-4 border-t border-gray-200">
-                    <h3 className="font-semibold mb-2">Related Exams</h3>
+                    <h3 className="font-semibold mb-2">Bài Kiểm Tra</h3>
                     <div className="space-y-2">
                       {relatedExams.map((exam) => (
                         <Link 
-                          key={exam.examId}
-                          to={`/exam/${exam.examId}`}
+                          key={exam.exam_id}
+                          to={`/exam/${exam.exam_id}`}
                           className="flex items-center gap-2 px-3 py-2 text-sm bg-edu-accent/20 text-edu-primary rounded-md hover:bg-edu-accent/30"
                           onClick={() => setSidebarOpen(false)}
                         >
@@ -342,30 +416,30 @@ const LearningPage = () => {
             <div className="mb-8">
               <h1 className="text-2xl font-bold text-edu-dark mb-2">{currentLesson.title}</h1>
               <div className="text-sm text-gray-500">
-                {chapters.find(ch => ch.chapterId === currentLesson.chapterId)?.title}
+                {chapters.find(ch => ch.chapter_id === currentLesson.chapter_id)?.title}
               </div>
             </div>
             
             {/* Lesson Content */}
             <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-              {currentPage ? (
+              {hasPages && currentPage ? (
                 <div 
                   className="prose max-w-none"
-                  dangerouslySetInnerHTML={{ __html: currentPage.content }}
+                  dangerouslySetInnerHTML={{ __html: currentPage.content || '<p>Trang này chưa có nội dung.</p>' }}
                 />
               ) : (
                 <div 
                   className="prose max-w-none"
-                  dangerouslySetInnerHTML={{ __html: currentLesson.content || '<p>No content available for this lesson.</p>' }}
+                  dangerouslySetInnerHTML={{ __html: currentLesson.content || '<p>Bài học này chưa có nội dung.</p>' }}
                 />
               )}
               
               {/* Page Navigation */}
-              {currentLesson.pages && currentLesson.pages.length > 0 && (
+              {hasPages && currentLesson.pages && currentLesson.pages.length > 0 && (
                 <div className="mt-8 pt-4 border-t border-gray-200">
                   <div className="flex justify-between items-center">
                     <div className="text-sm text-gray-500">
-                      Page {currentPageIndex + 1} of {currentLesson.pages.length}
+                      Trang {currentPageIndex + 1} / {currentLesson.pages.length}
                     </div>
                     <div className="flex gap-2">
                       <Button
@@ -374,13 +448,13 @@ const LearningPage = () => {
                         disabled={currentPageIndex === 0 && !prevLesson}
                       >
                         <ChevronLeft className="mr-2" size={16} />
-                        Previous
+                        Trang trước
                       </Button>
                       <Button
                         onClick={handleNextPage}
                         disabled={currentPageIndex === currentLesson.pages.length - 1 && !nextLesson}
                       >
-                        Next
+                        Trang tiếp theo
                         <ChevronRight className="ml-2" size={16} />
                       </Button>
                     </div>
@@ -391,12 +465,12 @@ const LearningPage = () => {
               {/* Attachments */}
               {currentLesson.documents && currentLesson.documents.length > 0 && (
                 <div className="mt-8 pt-4 border-t border-gray-200">
-                  <h3 className="font-semibold mb-4">Lesson Resources</h3>
+                  <h3 className="font-semibold mb-4">Tài liệu bài học</h3>
                   <div className="space-y-2">
                     {currentLesson.documents.map((doc) => (
                       <a
-                        key={doc.documentId}
-                        href={doc.filePath}
+                        key={doc.document_id}
+                        href={`http://localhost:5000/${doc.file_path}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-2 p-3 bg-gray-50 rounded-md hover:bg-gray-100"
@@ -404,7 +478,7 @@ const LearningPage = () => {
                         <FileText size={18} className="text-edu-primary" />
                         <div>
                           <div className="font-medium">{doc.title}</div>
-                          <div className="text-xs text-gray-500">Click to download</div>
+                          <div className="text-xs text-gray-500">Nhấp để tải xuống</div>
                         </div>
                       </a>
                     ))}
@@ -416,10 +490,10 @@ const LearningPage = () => {
             {/* Lesson Navigation */}
             <div className="flex justify-between">
               {prevLesson ? (
-                <Link to={`/learning/${courseId}/${prevLesson.lessonId}`}>
+                <Link to={`/learning/${courseId}/${prevLesson.lesson_id}`}>
                   <Button variant="outline">
                     <ChevronLeft className="mr-2" size={16} />
-                    Previous Lesson
+                    Bài học trước
                   </Button>
                 </Link>
               ) : (
@@ -427,9 +501,9 @@ const LearningPage = () => {
               )}
               
               {nextLesson && (
-                <Link to={`/learning/${courseId}/${nextLesson.lessonId}`}>
+                <Link to={`/learning/${courseId}/${nextLesson.lesson_id}`}>
                   <Button>
-                    Next Lesson
+                    Bài học tiếp theo
                     <ChevronRight className="ml-2" size={16} />
                   </Button>
                 </Link>
