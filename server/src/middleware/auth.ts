@@ -1,3 +1,4 @@
+
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { UserModel } from '../models/userModel';
@@ -15,15 +16,16 @@ declare global {
 }
 
 // Middleware kiểm tra xác thực JWT
-export const authenticateJWT = async (req: Request, res: Response, next: NextFunction) => {
+export const authenticateJWT = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const authHeader = req.headers.authorization;
     
     if (!authHeader) {
-      return res.status(401).json({ 
+      res.status(401).json({ 
         success: false, 
         message: 'Không có token xác thực' 
       });
+      return;
     }
 
     // Lấy token từ header "Bearer TOKEN"
@@ -40,20 +42,22 @@ export const authenticateJWT = async (req: Request, res: Response, next: NextFun
 
     next();
   } catch (error) {
-    return res.status(401).json({ 
+    res.status(401).json({ 
       success: false, 
       message: 'Token không hợp lệ hoặc đã hết hạn' 
     });
+    return;
   }
 };
 
 // Middleware kiểm tra quyền admin
-export const authorizeAdmin = (req: Request, res: Response, next: NextFunction) => {
+export const authorizeAdmin = (req: Request, res: Response, next: NextFunction): void => {
   if (req.user?.role !== 'admin') {
-    return res.status(403).json({ 
+    res.status(403).json({ 
       success: false, 
       message: 'Không có quyền truy cập. Yêu cầu quyền admin.' 
     });
+    return;
   }
   
   next();
@@ -63,40 +67,45 @@ export const authorizeAdmin = (req: Request, res: Response, next: NextFunction) 
 export const verifyResourceOwnership = (
   getResourceOwnerIdFn: (resourceId: number) => Promise<number | null>
 ) => {
-  return async (req: Request, res: Response, next: NextFunction) => {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       // Bỏ qua kiểm tra nếu người dùng là admin
       if (req.user?.role === 'admin') {
-        return next();
+        next();
+        return;
       }
 
       // Lấy ID của tài nguyên từ params
       const resourceId = parseInt(req.params.id);
       if (isNaN(resourceId)) {
-        return res.status(400).json({ success: false, message: 'ID không hợp lệ' });
+        res.status(400).json({ success: false, message: 'ID không hợp lệ' });
+        return;
       }
 
       // Lấy ID người dùng sở hữu tài nguyên
       const ownerId = await getResourceOwnerIdFn(resourceId);
       
       if (ownerId === null) {
-        return res.status(404).json({ success: false, message: 'Không tìm thấy tài nguyên' });
+        res.status(404).json({ success: false, message: 'Không tìm thấy tài nguyên' });
+        return;
       }
 
       // Kiểm tra nếu người dùng hiện tại là chủ sở hữu
       if (req.user?.userId !== ownerId) {
-        return res.status(403).json({ 
+        res.status(403).json({ 
           success: false, 
           message: 'Không có quyền truy cập vào tài nguyên này' 
         });
+        return;
       }
 
       next();
     } catch (error) {
-      return res.status(500).json({ 
+      res.status(500).json({ 
         success: false, 
         message: 'Lỗi server khi xác minh quyền sở hữu' 
       });
+      return;
     }
   };
 }; 

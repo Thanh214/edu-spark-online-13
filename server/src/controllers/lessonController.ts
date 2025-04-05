@@ -5,24 +5,26 @@ import { LessonCreateDTO, LessonUpdateDTO } from '../models/types';
 
 export const LessonController = {
   // Lấy bài học theo ID
-  async getLessonById(req: Request, res: Response) {
+  async getLessonById(req: Request, res: Response): Promise<void> {
     try {
       const lessonId = parseInt(req.params.id);
       
       if (isNaN(lessonId)) {
-        return res.status(400).json({
+        res.status(400).json({
           success: false,
           message: 'ID bài học không hợp lệ'
         });
+        return;
       }
       
       const lesson = await LessonModel.getLessonById(lessonId);
       
       if (!lesson) {
-        return res.status(404).json({
+        res.status(404).json({
           success: false,
           message: 'Không tìm thấy bài học'
         });
+        return;
       }
       
       res.status(200).json({
@@ -39,24 +41,26 @@ export const LessonController = {
   },
   
   // Lấy bài học kèm theo pages
-  async getLessonWithPages(req: Request, res: Response) {
+  async getLessonWithPages(req: Request, res: Response): Promise<void> {
     try {
       const lessonId = parseInt(req.params.id);
       
       if (isNaN(lessonId)) {
-        return res.status(400).json({
+        res.status(400).json({
           success: false,
           message: 'ID bài học không hợp lệ'
         });
+        return;
       }
       
       const lessonWithPages = await LessonModel.getLessonWithPages(lessonId);
       
       if (!lessonWithPages) {
-        return res.status(404).json({
+        res.status(404).json({
           success: false,
           message: 'Không tìm thấy bài học'
         });
+        return;
       }
       
       res.status(200).json({
@@ -73,15 +77,16 @@ export const LessonController = {
   },
   
   // Lấy bài học theo chapter ID
-  async getLessonsByChapterId(req: Request, res: Response) {
+  async getLessonsByChapterId(req: Request, res: Response): Promise<void> {
     try {
       const chapterId = parseInt(req.params.chapterId);
       
       if (isNaN(chapterId)) {
-        return res.status(400).json({
+        res.status(400).json({
           success: false,
           message: 'ID chương không hợp lệ'
         });
+        return;
       }
       
       const lessons = await LessonModel.getLessonsByChapterId(chapterId);
@@ -101,16 +106,17 @@ export const LessonController = {
   },
   
   // Tạo bài học mới
-  async createLesson(req: Request, res: Response) {
+  async createLesson(req: Request, res: Response): Promise<void> {
     try {
       const { chapter_id, title, content, lesson_order } = req.body;
       
       // Kiểm tra các trường bắt buộc
       if (!chapter_id || !title || lesson_order === undefined) {
-        return res.status(400).json({
+        res.status(400).json({
           success: false,
           message: 'Thiếu thông tin bắt buộc: chapter_id, title, lesson_order'
         });
+        return;
       }
       
       const lessonData: LessonCreateDTO = {
@@ -138,24 +144,26 @@ export const LessonController = {
   },
   
   // Cập nhật bài học
-  async updateLesson(req: Request, res: Response) {
+  async updateLesson(req: Request, res: Response): Promise<void> {
     try {
       const lessonId = parseInt(req.params.id);
       
       if (isNaN(lessonId)) {
-        return res.status(400).json({
+        res.status(400).json({
           success: false,
           message: 'ID bài học không hợp lệ'
         });
+        return;
       }
       
       // Kiểm tra xem bài học có tồn tại không
       const existingLesson = await LessonModel.getLessonById(lessonId);
       if (!existingLesson) {
-        return res.status(404).json({
+        res.status(404).json({
           success: false,
           message: 'Không tìm thấy bài học'
         });
+        return;
       }
       
       const { title, content, lesson_order, chapter_id } = req.body;
@@ -189,24 +197,26 @@ export const LessonController = {
   },
   
   // Xóa bài học
-  async deleteLesson(req: Request, res: Response) {
+  async deleteLesson(req: Request, res: Response): Promise<void> {
     try {
       const lessonId = parseInt(req.params.id);
       
       if (isNaN(lessonId)) {
-        return res.status(400).json({
+        res.status(400).json({
           success: false,
           message: 'ID bài học không hợp lệ'
         });
+        return;
       }
       
       // Kiểm tra xem bài học có tồn tại không
       const existingLesson = await LessonModel.getLessonById(lessonId);
       if (!existingLesson) {
-        return res.status(404).json({
+        res.status(404).json({
           success: false,
           message: 'Không tìm thấy bài học'
         });
+        return;
       }
       
       // Xóa bài học
@@ -226,30 +236,33 @@ export const LessonController = {
   },
   
   // Upload document for a lesson
-  async uploadDocument(req: Request, res: Response) {
+  async uploadDocument(req: Request, res: Response): Promise<void> {
     try {
       const lessonId = parseInt(req.params.id);
       const { title } = req.body;
       
       if (isNaN(lessonId)) {
-        return res.status(400).json({
+        res.status(400).json({
           success: false,
           message: 'ID bài học không hợp lệ'
         });
+        return;
       }
       
       if (!req.file) {
-        return res.status(400).json({
+        res.status(400).json({
           success: false,
           message: 'Không tìm thấy file'
         });
+        return;
       }
       
       if (!title) {
-        return res.status(400).json({
+        res.status(400).json({
           success: false, 
           message: 'Thiếu tiêu đề tài liệu'
         });
+        return;
       }
       
       // Lưu document vào database

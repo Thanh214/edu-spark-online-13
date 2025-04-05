@@ -1,145 +1,146 @@
 
 import { Request, Response } from 'express';
 import { DocumentModel } from '../models/documentModel';
-import path from 'path';
-import fs from 'fs';
 
 export const DocumentController = {
   // Lấy tài liệu theo ID
-  async getDocumentById(req: Request, res: Response) {
+  async getDocumentById(req: Request, res: Response): Promise<void> {
     try {
       const documentId = parseInt(req.params.id);
+      
       if (isNaN(documentId)) {
-        return res.status(400).json({
+        res.status(400).json({
           success: false,
           message: 'ID tài liệu không hợp lệ'
         });
+        return;
       }
-
+      
       const document = await DocumentModel.getDocumentById(documentId);
+      
       if (!document) {
-        return res.status(404).json({
+        res.status(404).json({
           success: false,
           message: 'Không tìm thấy tài liệu'
         });
+        return;
       }
-
-      return res.status(200).json({
+      
+      res.status(200).json({
         success: true,
         data: document
       });
     } catch (error: any) {
-      return res.status(500).json({
+      res.status(500).json({
         success: false,
-        message: 'Lỗi server: ' + error.message
+        message: 'Lỗi khi lấy thông tin tài liệu',
+        error: error.message
       });
     }
   },
-
-  // Lấy tài liệu theo bài học ID
-  async getDocumentsByLessonId(req: Request, res: Response) {
+  
+  // Lấy tài liệu theo lesson ID
+  async getDocumentsByLessonId(req: Request, res: Response): Promise<void> {
     try {
       const lessonId = parseInt(req.params.lessonId);
+      
       if (isNaN(lessonId)) {
-        return res.status(400).json({
+        res.status(400).json({
           success: false,
           message: 'ID bài học không hợp lệ'
         });
+        return;
       }
-
+      
       const documents = await DocumentModel.getDocumentsByLessonId(lessonId);
-      return res.status(200).json({
+      
+      res.status(200).json({
         success: true,
+        count: documents.length,
         data: documents
       });
     } catch (error: any) {
-      return res.status(500).json({
+      res.status(500).json({
         success: false,
-        message: 'Lỗi server: ' + error.message
+        message: 'Lỗi khi lấy danh sách tài liệu',
+        error: error.message
       });
     }
   },
-
+  
   // Tạo tài liệu mới
-  async createDocument(req: Request, res: Response) {
+  async createDocument(req: Request, res: Response): Promise<void> {
     try {
-      const { lesson_id, title } = req.body;
-      const file = req.file;
-
-      if (!lesson_id || !title || !file) {
-        return res.status(400).json({
+      const { lesson_id, title, file_path, file_type } = req.body;
+      
+      // Kiểm tra các trường bắt buộc
+      if (!lesson_id || !title || !file_path) {
+        res.status(400).json({
           success: false,
-          message: 'Thiếu thông tin tài liệu hoặc file'
+          message: 'Thiếu thông tin bắt buộc: lesson_id, title, file_path'
         });
+        return;
       }
-
+      
       const documentData = {
         lesson_id: parseInt(lesson_id),
         title,
-        file_path: file.path
+        file_path,
+        file_type: file_type || null
       };
-
+      
       const documentId = await DocumentModel.createDocument(documentData);
       const newDocument = await DocumentModel.getDocumentById(documentId);
-
-      return res.status(201).json({
+      
+      res.status(201).json({
         success: true,
-        message: 'Tài liệu đã được tạo thành công',
+        message: 'Tạo tài liệu thành công',
         data: newDocument
       });
     } catch (error: any) {
-      return res.status(500).json({
+      res.status(500).json({
         success: false,
-        message: 'Lỗi server: ' + error.message
+        message: 'Lỗi khi tạo tài liệu',
+        error: error.message
       });
     }
   },
-
+  
   // Xóa tài liệu
-  async deleteDocument(req: Request, res: Response) {
+  async deleteDocument(req: Request, res: Response): Promise<void> {
     try {
       const documentId = parseInt(req.params.id);
+      
       if (isNaN(documentId)) {
-        return res.status(400).json({
+        res.status(400).json({
           success: false,
           message: 'ID tài liệu không hợp lệ'
         });
+        return;
       }
-
-      // Lấy thông tin tài liệu để lấy đường dẫn file
-      const document = await DocumentModel.getDocumentById(documentId);
-      if (!document) {
-        return res.status(404).json({
+      
+      // Kiểm tra xem tài liệu có tồn tại không
+      const existingDocument = await DocumentModel.getDocumentById(documentId);
+      if (!existingDocument) {
+        res.status(404).json({
           success: false,
           message: 'Không tìm thấy tài liệu'
         });
+        return;
       }
-
-      // Xóa file nếu tồn tại
-      if (document.file_path) {
-        const filePath = path.join(__dirname, '../..', document.file_path);
-        if (fs.existsSync(filePath)) {
-          fs.unlinkSync(filePath);
-        }
-      }
-
-      // Xóa tài liệu trong database
-      const success = await DocumentModel.deleteDocument(documentId);
-      if (!success) {
-        return res.status(500).json({
-          success: false,
-          message: 'Không thể xóa tài liệu'
-        });
-      }
-
-      return res.status(200).json({
+      
+      // Xóa tài liệu
+      await DocumentModel.deleteDocument(documentId);
+      
+      res.status(200).json({
         success: true,
-        message: 'Tài liệu đã được xóa thành công'
+        message: 'Xóa tài liệu thành công'
       });
     } catch (error: any) {
-      return res.status(500).json({
+      res.status(500).json({
         success: false,
-        message: 'Lỗi server: ' + error.message
+        message: 'Lỗi khi xóa tài liệu',
+        error: error.message
       });
     }
   }
