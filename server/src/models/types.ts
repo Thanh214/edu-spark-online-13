@@ -10,6 +10,20 @@ export interface User {
   updated_at: Date;
 }
 
+export interface UserCreateDTO {
+  full_name: string;
+  email: string;
+  password: string;
+  role?: 'admin' | 'user';
+}
+
+export interface UserUpdateDTO {
+  full_name?: string;
+  email?: string;
+  password?: string;
+  role?: 'admin' | 'user';
+}
+
 export interface RegisterUserDTO {
   full_name: string;
   email: string;
