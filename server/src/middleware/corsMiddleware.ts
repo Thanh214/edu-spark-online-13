@@ -1,3 +1,4 @@
+
 import cors from 'cors';
 import { Request, Response, NextFunction } from 'express';
 
@@ -13,7 +14,7 @@ interface CorsOptions {
 }
 
 // Cấu hình CORS tùy chỉnh
-export const corsConfig = (): cors.CorsOptions => {
+const corsConfig = (): cors.CorsOptions => {
   const allowedOrigins = [
     'http://localhost:3000',
     'http://localhost:5173',
@@ -47,10 +48,10 @@ export const corsConfig = (): cors.CorsOptions => {
 };
 
 // Middleware cho phép kiểm soát CORS tùy theo route
-export const corsWithOptions = cors(corsConfig());
+const corsWithOptions = cors(corsConfig());
 
 // Middleware cho phép tất cả các yêu cầu CORS (cho development)
-export const corsForDevelopment = (req: Request, res: Response, next: NextFunction) => {
+const corsForDevelopment = (req: Request, res: Response, next: NextFunction) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
@@ -60,4 +61,10 @@ export const corsForDevelopment = (req: Request, res: Response, next: NextFuncti
   } else {
     next();
   }
-}; 
+};
+
+// Export default corsOptions for use in index.ts
+export default corsConfig();
+
+// Also export individual functions if needed elsewhere
+export { corsConfig, corsWithOptions, corsForDevelopment };
